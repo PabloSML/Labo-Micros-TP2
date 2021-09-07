@@ -50,8 +50,9 @@ typedef void (*tim_callback_t)(void);
 
 /**
  * @brief Initialize timer and corresponding peripheral
+ * @return Initialization succeed
  */
-void timerInit(void);
+bool timerInit(void);
 
 
 // Non-Blocking services ////////////////////////////////////////////////

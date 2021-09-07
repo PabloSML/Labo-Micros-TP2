@@ -26,6 +26,8 @@
  * ENUMERATIONS AND STRUCTURES AND TYPEDEFS
  ******************************************************************************/
 
+typedef void (*systck_callback_t)(void);
+
 /*******************************************************************************
  * VARIABLE PROTOTYPES WITH GLOBAL SCOPE
  ******************************************************************************/
@@ -39,7 +41,7 @@
  * @param funcallback Function to be call every SysTick
  * @return Initialization and registration succeed
  */
-bool SysTick_Init (void (*funcallback)(void));
+bool SysTick_Init (systck_callback_t funcallback);
 
 
 /*******************************************************************************

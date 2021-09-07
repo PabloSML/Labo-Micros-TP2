@@ -19,16 +19,12 @@
  * CONSTANT AND MACRO DEFINITIONS USING #DEFINE
  ******************************************************************************/
 
-// Ports
-enum { PA, PB, PC, PD, PE };
-
 // Convert port and number into pin ID
 // Ex: PTB5  -> PORTNUM2PIN(PB,5)  -> 0x25
 //     PTC22 -> PORTNUM2PIN(PC,22) -> 0x56
 #define PORTNUM2PIN(p,n)    (((p)<<5) + (n))
 #define PIN2PORT(p)         (((p)>>5) & 0x07)
 #define PIN2NUM(p)          ((p) & 0x1F)
-
 
 // Modes
 #ifndef INPUT
@@ -38,19 +34,38 @@ enum { PA, PB, PC, PD, PE };
 #define INPUT_PULLDOWN      3
 #endif // INPUT
 
-
 // Digital values
 #ifndef LOW
 #define LOW     0
 #define HIGH    1
 #endif // LOW
 
-
 /*******************************************************************************
  * ENUMERATIONS AND STRUCTURES AND TYPEDEFS
  ******************************************************************************/
 
+// Ports
+enum { PA, PB, PC, PD, PE };
+
+// IRQ modes
+typedef enum
+{
+	PORT_eDisabled				= 0x00,
+	PORT_eDMARising				= 0x01,
+	PORT_eDMAFalling			= 0x02,
+	PORT_eDMAEither				= 0x03,
+	PORT_eInterruptDisasserted	= 0x08,
+	PORT_eInterruptRising		= 0x09,
+	PORT_eInterruptFalling		= 0x0A,
+	PORT_eInterruptEither		= 0x0B,
+	PORT_eInterruptAsserted		= 0x0C,
+  GPIO_IRQ_CANT_MODES,
+  
+} PORTEvent_t;
+
 typedef uint8_t pin_t;
+
+typedef void (*pinIrqFun_t)(void);
 
 
 /*******************************************************************************
@@ -67,6 +82,15 @@ typedef uint8_t pin_t;
  * @param mode INPUT, OUTPUT, INPUT_PULLUP or INPUT_PULLDOWN.
  */
 void gpioMode (pin_t pin, uint8_t mode);
+
+/**
+ * @brief Configures how the pin reacts when an IRQ event ocurrs
+ * @param pin the pin whose IRQ mode you wish to set (according PORTNUM2PIN)
+ * @param irqMode disable, risingEdge, fallingEdge or bothEdges
+ * @param irqFun function to call on pin event
+ * @return Registration succeed
+ */
+bool gpioIRQ (pin_t pin, uint8_t irqMode, pinIrqFun_t irqFun);
 
 /**
  * @brief Write a HIGH or a LOW value to a digital pin

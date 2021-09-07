@@ -79,15 +79,14 @@ static tim_id_t timers_cant = TIMER_ID_INTERNAL+1;
  *******************************************************************************
  ******************************************************************************/
 
-void timerInit(void)
+bool timerInit(void)
 {
     static bool yaInit = false;
-    if (yaInit)
-        return;
     
-    SysTick_Init(timer_isr); // init peripheral
-    
-    yaInit = true;
+    if (!yaInit && SysTick_Init(timer_isr)) // init peripheral
+        yaInit = true;
+
+    return yaInit;
 }
 
 

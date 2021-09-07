@@ -46,8 +46,7 @@
  * STATIC VARIABLES AND CONST VARIABLES WITH FILE LEVEL SCOPE
  ******************************************************************************/
 
-static void (*systick_callback)(void);
-
+static systck_callback_t systick_callback;
 
 /*******************************************************************************
  *******************************************************************************
@@ -55,7 +54,7 @@ static void (*systick_callback)(void);
  *******************************************************************************
  ******************************************************************************/
 
-bool SysTick_Init (void (*funcallback)(void))
+bool SysTick_Init (systck_callback_t funcallback)
 {
     static bool yaInit = false;
 #if DEVELOPMENT_MODE
