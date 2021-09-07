@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "hardware.h": "c",
+        "mk64f12.h": "c"
+    }
+}

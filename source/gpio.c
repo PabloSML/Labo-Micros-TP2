@@ -140,7 +140,7 @@ void gpioWrite (pin_t pin, bool value)
 {
 	uint32_t port = PIN2PORT(pin);
 	uint32_t numpin = PIN2NUM(pin);
-	uint32_t pinmask = (uint32_t)(1 << numpin);
+	// uint32_t pinmask = (uint32_t)(1 << numpin);
 
 	if(value)
 		BITSET(gpiopointer[port]->PDOR,numpin);
@@ -181,7 +181,7 @@ bool gpioRead (pin_t pin)
                         LOCAL FUNCTION DEFINITIONS
  *******************************************************************************
  ******************************************************************************/
-
+/*
 __ISR__ PORTA_IRQHandler (void)
 {
 
@@ -196,7 +196,7 @@ __ISR__ PORTA_IRQHandler (void)
     {
         callback();
     }
-}
+}*/
 
 
 /******************************************************************************/
