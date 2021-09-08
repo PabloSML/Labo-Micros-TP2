@@ -60,12 +60,12 @@ typedef enum
 	PORT_eInterruptFalling		= 0x0A,
 	PORT_eInterruptEither		= 0x0B,
 	PORT_eInterruptAsserted		= 0x0C,
-  GPIO_IRQ_CANT_MODES,
+  	GPIO_IRQ_CANT_MODES
   
 } PORTEvent_t;
 
 typedef uint8_t pin_t;
-
+typedef uint8_t irq_id_t;
 typedef void (*pinIrqFun_t)(void);
 
 
@@ -85,13 +85,19 @@ typedef void (*pinIrqFun_t)(void);
 void gpioMode (pin_t pin, uint8_t mode);
 
 /**
+ * @brief Request an irq
+ * @return ID of the irq to use
+ */
+irq_id_t irqGetId(pin_t pin);
+
+/**
  * @brief Configures how the pin reacts when an IRQ event ocurrs
  * @param pin the pin whose IRQ mode you wish to set (according PORTNUM2PIN)
  * @param irqMode disable, risingEdge, fallingEdge or bothEdges
  * @param irqFun function to call on pin event
  * @return Registration succeed
  */
-bool gpioIRQ (pin_t pin, uint8_t irqMode, pinIrqFun_t irqFun);
+bool gpioIRQ (pin_t pin, PORTEvent_t irqMode, irq_id_t id, pinIrqFun_t irqFun);
 
 /**
  * @brief Write a HIGH or a LOW value to a digital pin

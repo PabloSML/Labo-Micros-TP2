@@ -8,7 +8,7 @@
  * INCLUDE HEADER FILES
  ******************************************************************************/
 
-#include "gpio.h"
+#include "gpio_pdrv.h"
 #include "hardware.h"
 #include "MK64F12.h"
 
@@ -18,14 +18,13 @@
 
 #define GPIO_DEVELOPMENT_MODE 1
 
-#define MUX_DEFAULT       	1
-//#define IRQC_DEFAULT	  	0
 #define PCR_PE_ENABLE	  	1
 #define PORT_PCR_MUX_CLR  	~PORT_PCR_MUX_MASK
 #define PORT_PCR_IRQC_CLR	~PORT_PCR_IRQC_MASK
 
-#define PORT_CANT			5
-#define PORT_WIDTH			32
+#define PORT_CANT				5
+#define PORT_IRQS_MAX_CANT		8	// Max number of active IRQs per port
+#define PORT_IRQ_INVALID_ID		255
 
 #define BITCLR(x,pos) ((x) &= ((uint32_t)(~(((uint32_t)1) << (pos)))))
 #define BITSET(x,pos) ((x) |= ((uint32_t)((((uint32_t)1) << (pos)))))
@@ -33,6 +32,27 @@
 /*******************************************************************************
  * ENUMERATIONS AND STRUCTURES AND TYPEDEFS
  ******************************************************************************/
+
+typedef enum
+{
+	PORT_mAnalog,
+	PORT_mGPIO,
+	PORT_mAlt2,
+	PORT_mAlt3,
+	PORT_mAlt4,
+	PORT_mAlt5,
+	PORT_mAlt6,
+	PORT_mAlt7,
+
+} PORTMux_t;
+
+typedef uint32_t isfr_mask;
+
+typedef struct
+{
+	pinIrqFun_t callback;
+	isfr_mask mask;
+} irq_packet_t;
 
 /*******************************************************************************
  * VARIABLES WITH GLOBAL SCOPE
@@ -42,6 +62,8 @@
  * FUNCTION PROTOTYPES FOR PRIVATE FUNCTIONS WITH FILE LEVEL SCOPE
  ******************************************************************************/
 
+static void PORTN_IRQHandler (uint32_t port);
+
 /*******************************************************************************
  * ROM CONST VARIABLES WITH FILE LEVEL SCOPE
  ******************************************************************************/
@@ -50,7 +72,8 @@
  * STATIC VARIABLES AND CONST VARIABLES WITH FILE LEVEL SCOPE
  ******************************************************************************/
 
-static pinIrqFun_t pinIrq_callbacks[PORT_CANT][PORT_WIDTH];
+static irq_packet_t portIrq_packets[PORT_CANT][PORT_IRQS_MAX_CANT];
+static irq_id_t portIrq_cant[PORT_CANT];
 static PORT_Type * portpointer[] = PORT_BASE_PTRS;
 static GPIO_Type * gpiopointer[] = GPIO_BASE_PTRS;
 
@@ -73,10 +96,12 @@ void gpioMode (pin_t pin, uint8_t mode)
 
 	uint32_t PCR_temp = portpointer[port]->PCR[numpin]; //RMW
 	PCR_temp &= PORT_PCR_MUX_CLR; //Reinicio el MUX
-	PCR_temp |= PORT_PCR_MUX(MUX_DEFAULT); //Cargo el MUX Default
+	PCR_temp |= PORT_PCR_MUX(PORT_mGPIO); //Cargo el MUX GPIO
 	PCR_temp &= PORT_PCR_IRQC_CLR; //Reinicio IRQC
 	PCR_temp |= PORT_PCR_IRQC(PORT_eDisabled);
-	pinIrq_callbacks[port][numpin] = NULL;	// Elimino un callback si existia
+	
+	PCR_temp |=	PORT_PCR_ISF_MASK;	// Bajar flag de ISF
+
 	portpointer[port]->PCR[numpin] = PCR_temp; //Cargamos PCR temporal
 
 	switch(mode)
@@ -101,24 +126,44 @@ void gpioMode (pin_t pin, uint8_t mode)
 }
 
 /**
+ * @brief Request an irq
+ * @return ID of the irq to use
+ */
+irq_id_t irqGetId(pin_t pin)
+{
+	uint32_t port = PIN2PORT(pin);
+#ifdef GPIO_DEVELOPMENT_MODE
+    if (portIrq_cant[port] >= PORT_IRQS_MAX_CANT)
+    {
+        return PORT_IRQ_INVALID_ID;
+    }
+    else
+#endif // GPIO_DEVELOPMENT_MODE
+    {
+        return portIrq_cant[port]++;
+    }
+} 
+
+/**
  * @brief Configures how the pin reacts when an IRQ event ocurrs
  * @param pin the pin whose IRQ mode you wish to set (according PORTNUM2PIN)
  * @param irqMode disable, risingEdge, fallingEdge or bothEdges
  * @param irqFun function to call on pin event
  * @return Registration succeed
  */
-bool gpioIRQ (pin_t pin, uint8_t irqMode, pinIrqFun_t irqFun)
+bool gpioIRQ (pin_t pin, PORTEvent_t irqMode, irq_id_t id, pinIrqFun_t irqFun)
 {
 	bool success = false;
 
 #ifdef GPIO_DEVELOPMENT_MODE
-    if ((irqFun) && (irqMode < GPIO_IRQ_CANT_MODES))
+    if ((irqFun) && (irqMode < GPIO_IRQ_CANT_MODES) && (id != PORT_IRQ_INVALID_ID))
 #endif // GPIO_DEVELOPMENT_MODE
 	{
 		uint32_t port = PIN2PORT(pin);
 		uint32_t numpin = PIN2NUM(pin);
 
-		pinIrq_callbacks[port][numpin] = irqFun;	// Asigno el callback
+		portIrq_packets[port][id].mask = (isfr_mask)(((uint32_t)1) << numpin);
+		portIrq_packets[port][id].callback = irqFun;	// Asigno el callback
 
 		uint32_t PCR_temp = portpointer[port]->PCR[numpin]; //RMW
 		PCR_temp &= PORT_PCR_IRQC_CLR; //Reinicio IRQC
@@ -181,22 +226,50 @@ bool gpioRead (pin_t pin)
                         LOCAL FUNCTION DEFINITIONS
  *******************************************************************************
  ******************************************************************************/
-/*
+
+static void PORTN_IRQHandler (uint32_t port)
+{
+	uint32_t ISFR_temp = portpointer[port]->ISFR;
+
+	for(irq_id_t id = 0; id < portIrq_cant[port]; id++)
+	{
+		if(ISFR_temp & portIrq_packets[port][id].mask)	// Por como funciona, podría leer una irq que no sea la que llamo a esta fun
+		{
+			portpointer[port]->ISFR |= portIrq_packets[port][id].mask;
+#ifdef GPIO_DEVELOPMENT_MODE
+    		if (portIrq_packets[port][id].callback)
+#endif // DEVELOPMENT_MODE
+    		{
+        		portIrq_packets[port][id].callback();
+    		}
+		}
+	}
+}
+
 __ISR__ PORTA_IRQHandler (void)
 {
+	PORTN_IRQHandler(PA);
+}
 
-	uint32_t ISFR_temp = portpointer[PA]->ISFR;
+__ISR__ PORTB_IRQHandler (void)
+{
+	PORTN_IRQHandler(PB);
+}
 
+__ISR__ PORTC_IRQHandler (void)
+{
+	PORTN_IRQHandler(PC);
+}
 
+__ISR__ PORTD_IRQHandler (void)
+{
+	PORTN_IRQHandler(PD);
+}
 
-	pinIrqFun_t callback[PA];
-#ifdef GPIO_DEVELOPMENT_MODE
-    if (callback)
-#endif // DEVELOPMENT_MODE
-    {
-        callback();
-    }
-}*/
+__ISR__ PORTE_IRQHandler (void)
+{
+	PORTN_IRQHandler(PE);
+}
 
 
 /******************************************************************************/

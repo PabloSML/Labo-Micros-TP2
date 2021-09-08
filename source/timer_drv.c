@@ -8,9 +8,9 @@
  * INCLUDE HEADER FILES
  ******************************************************************************/
 
-#include "timer.h"
+#include "timer_drv.h"
 
-#include "SysTick.h"
+#include "SysTick_pdrv.h"
 
 /*******************************************************************************
  * CONSTANT AND MACRO DEFINITIONS USING #DEFINE
@@ -148,7 +148,6 @@ void timerDelay(ttick_t ticks)
     }
 }
 
-
 /*******************************************************************************
  *******************************************************************************
                         LOCAL FUNCTION DEFINITIONS
@@ -161,7 +160,7 @@ static void timer_isr(void)
     {
         if(timers[id].running)  // si el timer esta activo
         {
-            if(!(timers[id].cnt--))     // decremento el contador de ticks, termino?
+            if(!(--timers[id].cnt))     // decremento el contador de ticks, termino?
             {
                 timers[id].expired = true;  // hubo timeout!
                 if(timers[id].callback)     // si el callback no es NULL       

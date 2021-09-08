@@ -8,7 +8,7 @@
  * INCLUDE HEADER FILES
  ******************************************************************************/
 
-#include "SysTick.h"
+#include "SysTick_pdrv.h"
 
 #include "hardware.h"
 
