@@ -18,8 +18,19 @@
 
 #define BUTTON_DEVELOPMENT_MODE 1
 
+// Choose Board for Pin config
+#define FRDM            0
+#define DJ_BOARD        1
+
+#define BOARD           FRDM
+
 // On Board User Switch
-#define PIN_SW          PORTNUM2PIN(PA,4) // PTA1 on FRDM Molex - PTA4 SW3
+#if (BOARD == FRDM)
+#define PIN_SW          PORTNUM2PIN(PA,4) // PTA4 SW3
+#elif (BOARD == DJ_BOARD)
+#define PIN_SW          PORTNUM2PIN(PA,1) // PTA1 on FRDM Molex
+#endif
+
 #define SW_ACTIVE       LOW   // Physical Pull-Up Included
 #define SW_INPUT_TYPE   INPUT
 
