@@ -93,7 +93,8 @@ static void magReaderHandler(void)
 
   if(isdataOK)
   {
-
+    //Hay que hacer algo mas, que no se
+    clrData();
   }
 
 }
@@ -122,7 +123,7 @@ static bool parseData(void)
     uint8_t PANlen = (FSindex - SSindex)/BITS_PER_CHAR - 1; //Resto SS
     uint8_t realTracklen = MAX_CHAR_LEN - 19 + PANlen; //el largo de PAN es variable
 
-    for(uint8_t char_num = 0; char_num < realTracklen, ++char_num)
+    for(uint8_t char_num = 0; char_num < realTracklen; ++char_num)
     {
       parsedData[char_num] = LS2MS(&cardData[SSindex + char_num*BITS_PER_CHAR]);
     }
@@ -141,7 +142,7 @@ static bool chkParity(uint8_t myData[])
   }
 }
 
-static uint8_t findSSIndex(void)
+static uint8_t findIndex(uint8_t index)
 {
   for(uint8_t i = 0; i < TRACK2_BITLEN; ++i)
   {
@@ -178,4 +179,12 @@ static uint8_t findESIndex(void)
     }
   }
   return CHAR_NOT_FOUND;
+}
+
+static void clrData(void)
+{
+  for (uint8_t i = 0; i < TRACK2_BITLEN + 10*BITS_PER_CHAR;++i)
+    cardData[i] = false;
+  for(uint8_t i = 0; i < MAX_CHAR_LEN; ++i)
+    parsedData[i] = 0;
 }
