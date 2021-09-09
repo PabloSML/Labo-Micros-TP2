@@ -7,6 +7,8 @@
 #ifndef _LED_DRV_H_
 #define _LED_DRV_H_
 
+
+
 /*******************************************************************************
  * INCLUDE HEADER FILES
  ******************************************************************************/
@@ -26,6 +28,9 @@
 
 #define BOARD           DJ_BOARD
 
+// Period for ISR
+#define LED_ISR_PERIOD      5U   // 10 ms
+
 /*******************************************************************************
  * ENUMERATIONS AND STRUCTURES AND TYPEDEFS
  ******************************************************************************/
@@ -33,12 +38,12 @@
 #if (BOARD == DJ_BOARD)
 typedef enum
 {
-  LED_OFF               = 0x00,
-	LED_1                 = 0x01,
-	LED_2				          = 0x02,
-	LED_3      			      = 0x03
+	LED_1                 = 0x00,
+	LED_2				          = 0x01,
+	LED_3      			      = 0x02,
+  LED_OFF               = 0x03
   
-} Led_t;
+} led_label_t;
 #endif
 
 /*******************************************************************************
@@ -59,27 +64,28 @@ bool ledInit(void);
 
 /**
  * @brief Turn On chosen LED
- * @return True if pressed, false if not pressed
+ * @param led Chosen LED
  */
-void ledOn(void);
+void ledOn(led_label_t led);
 
 /**
- * @brief Get button current position
- * @return True if pressed, false if not pressed
+ * @brief Turn Off chosen LED
+ * @param led Chosen LED
  */
-void ledOff(void);
+void ledOff(led_label_t led);
 
 /**
- * @brief Get button current position
- * @return True if pressed, false if not pressed
+ * @brief Toggle chosen LED
+ * @param led Chosen LED
  */
-void ledToggle(void);
+void ledToggle(led_label_t led);
 
 /**
- * @brief Get button current position
- * @return True if pressed, false if not pressed
+ * @brief Blink chosen LED
+ * @param led Chosen LED
+ * @param period Blinking period (ms - Multiple of LED_ISR_PERIOD*LED_CANT)
  */
-void ledBlink(void);
+void ledBlink(led_label_t led, uint32_t period);
 
 /*******************************************************************************
  ******************************************************************************/
