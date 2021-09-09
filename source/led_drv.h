@@ -1,11 +1,11 @@
 /***************************************************************************//**
-  @file     button_drv.h
-  @brief    Button driver header file
+  @file     led_drv.h
+  @brief    LED Driver Header File
   @author   Grupo 4
  ******************************************************************************/
 
-#ifndef _BUTTON_DRV_H_
-#define _BUTTON_DRV_H_
+#ifndef _LED_DRV_H_
+#define _LED_DRV_H_
 
 /*******************************************************************************
  * INCLUDE HEADER FILES
@@ -20,20 +20,26 @@
  * CONSTANT AND MACRO DEFINITIONS USING #DEFINE
  ******************************************************************************/
 
+// Choose Board for Pin config
+#define FRDM            0
+#define DJ_BOARD        1
+
+#define BOARD           DJ_BOARD
 
 /*******************************************************************************
  * ENUMERATIONS AND STRUCTURES AND TYPEDEFS
  ******************************************************************************/
 
+#if (BOARD == DJ_BOARD)
 typedef enum
 {
-  BUTTON_noev           = 0x00,
-	BUTTON_ePress         = 0x01,
-	BUTTON_eRelease				= 0x02,
-	BUTTON_eLKP      			= 0x03,
-	BUTTON_eTypeMatic		  = 0x04
+  LED_OFF               = 0x00,
+	LED_1                 = 0x01,
+	LED_2				          = 0x02,
+	LED_3      			      = 0x03
   
-} ButtonEvent_t;
+} Led_t;
+#endif
 
 /*******************************************************************************
  * VARIABLE PROTOTYPES WITH GLOBAL SCOPE
@@ -44,34 +50,38 @@ typedef enum
  ******************************************************************************/
 
 /**
- * @brief Initialize button_drv and corresponding peripheral
+ * @brief Initialize led_drv and corresponding peripheral
  * @return Initialization succeed
  */
-bool buttonInit(void);
+bool ledInit(void);
 
 // Non-Blocking services ////////////////////////////////////////////////
+
+/**
+ * @brief Turn On chosen LED
+ * @return True if pressed, false if not pressed
+ */
+void ledOn(void);
 
 /**
  * @brief Get button current position
  * @return True if pressed, false if not pressed
  */
-bool button_isPressed(void);
+void ledOff(void);
 
 /**
- * @brief Query event
- * @return True if event, false if not event
+ * @brief Get button current position
+ * @return True if pressed, false if not pressed
  */
-bool button_hasEvent(void);
+void ledToggle(void);
 
 /**
- * @brief Get button event
- * @return NOEV, PRESS, RELEASE, LKP, TYPEMATIC
+ * @brief Get button current position
+ * @return True if pressed, false if not pressed
  */
-ButtonEvent_t button_getEvent(void);
-
-// Blocking services ////////////////////////////////////////////////
+void ledBlink(void);
 
 /*******************************************************************************
  ******************************************************************************/
 
-#endif // _BUTTON_DRV_H_
+#endif // _LED_DRV_H_

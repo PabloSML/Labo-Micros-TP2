@@ -16,9 +16,16 @@
  * CONSTANT AND MACRO DEFINITIONS USING #DEFINE
  ******************************************************************************/
 
+// Choose Board for Pin config
+#define FRDM            0
+
+#define BOARD           FRDM
+
+#if (BOARD == FRDM)
 #if TIMER_TICK_MS != (1000U/SYSTICK_ISR_FREQUENCY_HZ)
 #error Las frecuencias no coinciden!!
 #endif // TIMER_TICK_MS != (1000U/SYSTICK_ISR_FREQUENCY_HZ)
+#endif
 
 #define TIMER_DEVELOPMENT_MODE    1
 
@@ -82,10 +89,10 @@ static tim_id_t timers_cant = TIMER_ID_INTERNAL+1;
 bool timerInit(void)
 {
     static bool yaInit = false;
-    
+#if (BOARD == FRDM)
     if (!yaInit && SysTick_Init(timer_isr)) // init peripheral
         yaInit = true;
-
+#endif
     return yaInit;
 }
 
