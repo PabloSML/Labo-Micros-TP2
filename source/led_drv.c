@@ -28,15 +28,29 @@
 #define LED_STATUS_0    PORTNUM2PIN(PB,9) // PTB9 on FRDM Molex
 #define LED_STATUS_1    PORTNUM2PIN(PC,17) // PTC17 on FRDM Molex
 #define LED_ACTIVE      LOW
+#define LED_CANT        3
 #endif
-
-// Period for ISR
-#define ISR_PERIOD      100U   // 100 ms
 
 /*******************************************************************************
  * ENUMERATIONS AND STRUCTURES AND TYPEDEFS
  ******************************************************************************/
 
+typedef enum
+{
+  OFF               = 0x00,   // Continually OFF
+	ON                = 0x01,   // Continually ON
+	BLINK      			  = 0x02    // Blinking
+  
+} led_state_t;
+
+typedef struct
+{
+  led_state_t   state;
+  ttick_t       blink_period;
+  ttick_t       count;
+  bool          isOn;         // Flag for blinking only         
+
+} led_t;
 
 
 /*******************************************************************************
@@ -52,6 +66,19 @@
  */
 static void led_isr(void);
 
+/**
+ * @brief Cycle through LED focus (LED1, LED2, LED3, LED1, ...)
+ */
+static void cycle_focus(void);
+
+#if (BOARD == DJ_BOARD)
+/**
+ * @brief Select LED - Changes pins instead of state (OFF, LED1, LED2, LED3)
+ * @param led Chosen LED
+ */
+static void selectLed(led_label_t led);
+#endif
+
 /*******************************************************************************
  * ROM CONST VARIABLES WITH FILE LEVEL SCOPE
  ******************************************************************************/
@@ -61,7 +88,9 @@ static void led_isr(void);
  ******************************************************************************/
 
 static tim_id_t timerId;
-static ttick_t timerTicks = ISR_PERIOD;
+static ttick_t timerTicks = LED_ISR_PERIOD;
+static led_t leds[LED_CANT];
+static led_label_t focus = LED_1;
 
 /*******************************************************************************
  *******************************************************************************
@@ -75,8 +104,9 @@ bool ledInit(void)
     
   if (!yaInit) // init peripheral
   {
-    gpioMode(LED_STATUS_0, OUTPUT);  // Set gpio connected to Status0 as output
-    gpioMode(LED_STATUS_1, OUTPUT);  // Set gpio connected to Status1 as output
+    selectLed(LED_OFF);               // Set gpio connected to Status as LOW (All LEDs OFF)
+    gpioMode(LED_STATUS_0, OUTPUT);   // Set gpio connected to Status0 as output
+    gpioMode(LED_STATUS_1, OUTPUT);   // Set gpio connected to Status1 as output
     timerInit();
     timerId = timerGetId();
 #ifdef LED_DEVELOPMENT_MODE
@@ -91,6 +121,31 @@ bool ledInit(void)
   return yaInit;
 }
 
+void ledOn(led_label_t led)
+{
+  leds[led].state = ON;
+}
+
+
+void ledOff(led_label_t led)
+{
+  leds[led].state = OFF;
+}
+
+
+void ledToggle(led_label_t led)
+{
+  if (leds[led].state != BLINK)
+    leds[led].state = !(leds[led].state); // OFF <-> ON
+}
+
+
+void ledBlink(led_label_t led, uint32_t period)
+{
+  leds[led].state = BLINK;
+  leds[led].blink_period = period/(LED_ISR_PERIOD*LED_CANT);
+  leds[led].count = leds[led].blink_period;
+}
 
 /*******************************************************************************
  *******************************************************************************
@@ -100,7 +155,63 @@ bool ledInit(void)
 
 static void led_isr(void)
 {
+  switch (leds[focus].state)
+  {
+  case OFF:
+    selectLed(LED_OFF);
+    break;
+  
+  case ON:
+    selectLed(focus);
+    break;
+  
+  case BLINK:
+    if(!(--(leds[focus].count)))                            // Decremento el contador de ticks, termino?
+    {
+      leds[focus].isOn = !(leds[focus].isOn);               // Toggle blink state
+      leds[focus].count = leds[focus].blink_period;         // Reset blink timer
+    }
+    selectLed((leds[focus].isOn)? (focus) : (LED_OFF));     // LED ON or OFF
+    break;
+  
+  default:
+    break;
+  }
 
+  cycle_focus();
 }
+
+static void cycle_focus(void)
+{
+  focus = (led_label_t)((focus + 1) % LED_CANT);
+}
+
+#if (BOARD == DJ_BOARD)
+static void selectLed(led_label_t led)
+{
+  switch (led)
+  {
+  case LED_OFF:
+    gpioWrite(LED_STATUS_0, LOW);
+    gpioWrite(LED_STATUS_1, LOW);
+    break;
+  case LED_1:
+    gpioWrite(LED_STATUS_0, HIGH);
+    gpioWrite(LED_STATUS_1, LOW);
+    break;
+  case LED_2:
+    gpioWrite(LED_STATUS_0, LOW);
+    gpioWrite(LED_STATUS_1, HIGH);
+    break;
+  case LED_3:
+    gpioWrite(LED_STATUS_0, HIGH);
+    gpioWrite(LED_STATUS_1, HIGH);
+    break;
+  
+  default:
+    break;
+  }
+}
+#endif
 
 /******************************************************************************/

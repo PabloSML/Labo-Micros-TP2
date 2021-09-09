@@ -22,7 +22,7 @@
 #define FRDM            0
 #define DJ_BOARD        1
 
-#define BOARD           FRDM
+#define BOARD           DJ_BOARD
 
 // On Board User Switch
 #if (BOARD == FRDM)
@@ -35,11 +35,11 @@
 #define SW_INPUT_TYPE   INPUT
 
 // Period for ISR
-#define ISR_PERIOD      10U   // 10 ms    - Software Debouncing
+#define BUTTON_ISR_PERIOD      10U   // 10 ms    - Software Debouncing
 
-#define LKP_THRESHOLD   ((300U)/(ISR_PERIOD))   // 500 ms   - Begin LKP state
-#define TM_THRESHOLD    ((3000U)/(ISR_PERIOD))  // 3000 ms  - Begin TypeMatic state
-#define TM_REPEAT       ((1000U)/(ISR_PERIOD))  // 1000 ms  - Repeat TypeMatic state
+#define LKP_THRESHOLD   ((300U)/(BUTTON_ISR_PERIOD))   // 500 ms   - Begin LKP state
+#define TM_THRESHOLD    ((3000U)/(BUTTON_ISR_PERIOD))  // 3000 ms  - Begin TypeMatic state
+#define TM_REPEAT       ((1000U)/(BUTTON_ISR_PERIOD))  // 1000 ms  - Repeat TypeMatic state
 
 
 /*******************************************************************************
@@ -74,7 +74,7 @@ static void button_isr(void);
  ******************************************************************************/
 
 static tim_id_t timerId;
-static ttick_t timerTicks = ISR_PERIOD;
+static ttick_t timerTicks = BUTTON_ISR_PERIOD;
 static bool buttonPressed = false;
 static ButtonState_t state = BUTTON_sReleased;
 static ButtonEvent_t ev = BUTTON_noev;
