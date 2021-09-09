@@ -46,7 +46,7 @@
  * ENUMERATIONS AND STRUCTURES AND TYPEDEFS
  ******************************************************************************/
 
-enum state_t {OFF = 0, RED = 1, GREEN = 2, BLUE = 3};
+enum led_color_t {RED = LED_RED, GREEN = LED_GREEN, BLUE = LED_BLUE};
 
 typedef pin_t led_t;
 typedef pin_t sw_t;
@@ -71,7 +71,7 @@ void ledOn(led_t led_color);
 /**
  * @brief LED Off
  */
-void ledToggle(void);
+void ledToggle(led_t led_color);
 
 
 /*********** Switch init & services ****************/

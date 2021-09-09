@@ -1,6 +1,6 @@
 /***************************************************************************//**
-  @file     board.c
-  @brief    Board controller.
+  @file     App.c template
+  @brief    Application functions
   @author   Grupo 4
  ******************************************************************************/
 
@@ -9,6 +9,8 @@
  ******************************************************************************/
 
 #include "board.h"
+#include "hardware.h"
+#include "MK64F12.h"
 
 /*******************************************************************************
  * CONSTANT AND MACRO DEFINITIONS USING #DEFINE
@@ -16,26 +18,7 @@
 
 
 /*******************************************************************************
- * ENUMERATIONS AND STRUCTURES AND TYPEDEFS
- ******************************************************************************/
-
-
-/*******************************************************************************
- * VARIABLES WITH GLOBAL SCOPE
- ******************************************************************************/
-
-/*******************************************************************************
  * FUNCTION PROTOTYPES FOR PRIVATE FUNCTIONS WITH FILE LEVEL SCOPE
- ******************************************************************************/
-
-
-
-/*******************************************************************************
- * ROM CONST VARIABLES WITH FILE LEVEL SCOPE
- ******************************************************************************/
-
-/*******************************************************************************
- * STATIC VARIABLES AND CONST VARIABLES WITH FILE LEVEL SCOPE
  ******************************************************************************/
 
 
@@ -46,34 +29,41 @@
  *******************************************************************************
  ******************************************************************************/
 
-/*********** LED init & services ****************/
-void ledInit(led_t led_color)
+/* Función que se llama 1 vez, al comienzo del programa */
+void App_Init (void)
 {
-	gpioWrite(led_color, !LED_ACTIVE);	// Inicializar con valor off antes de cambiar a out!
-	gpioMode(led_color, OUTPUT);
+  hw_DisableInterrupts();
+
+  //Enable clocking for port B,A,E
+  SIM->SCGC5 |= SIM_SCGC5_PORTB_MASK;
+  SIM->SCGC5 |= SIM_SCGC5_PORTA_MASK;
+  SIM->SCGC5 |= SIM_SCGC5_PORTE_MASK;
+
+  PORT_Type * portpointer[] = PORT_BASE_PTRS;
+  portpointer[PA]->ISFR |= 0xFFFFU;
+  
+  NVIC_EnableIRQ(PORTA_IRQn);
+
+  ledInit(LED_RED);
+  switchInit(SW3);
+
+  irq_id_t id = irqGetId(SW3);
+  gpioIRQ(SW3, PORT_eInterruptFalling, id, &ledToggle);
+
+  hw_EnableInterrupts();
+
 }
 
-void ledOff(led_t led_color)
+/* Función que se llama constantemente en un ciclo infinito */
+void App_Run (void)
 {
-	gpioWrite(led_color, !LED_ACTIVE);
+  while (1)
+  {
+    /* wait... */
+  }
+  
 }
 
-void ledOn(led_t led_color)
-{
-	gpioWrite(led_color, LED_ACTIVE);
-}
-
-void ledToggle(led_t led_color)
-{
-	gpioToggle(led_color);
-}
-
-/*********** Switch init & services ****************/
-
-void switchInit(sw_t sw_number)
-{
-	gpioMode(sw_number, SW_INPUT_TYPE);
-}
 
 /*******************************************************************************
  *******************************************************************************
@@ -82,4 +72,6 @@ void switchInit(sw_t sw_number)
  ******************************************************************************/
 
 
-/******************************************************************************/
+
+/*******************************************************************************
+ ******************************************************************************/

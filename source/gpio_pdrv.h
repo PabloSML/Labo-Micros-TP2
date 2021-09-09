@@ -86,6 +86,7 @@ void gpioMode (pin_t pin, uint8_t mode);
 
 /**
  * @brief Request an irq
+ * @param pin the pin whose IRQ you wish to register (according PORTNUM2PIN)
  * @return ID of the irq to use
  */
 irq_id_t irqGetId(pin_t pin);
