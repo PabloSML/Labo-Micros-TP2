@@ -38,7 +38,9 @@
 #define PIN_STATUS0       PORTNUM2PIN(PB,9)   // D.O - AH
 #define PIN_STATUS1       PORTNUM2PIN(PC,17)  // D.O - AH
 
-
+#define PIN_MAG_EN        PORTNUM2PIN(PB,2) //
+#define PIN_MAG_DT 	      PORTNUM2PIN(PB,3) //
+#define PIN_MAG_CLK	      PORTNUM2PIN(PB,10) //
 /*******************************************************************************
  * FUNCTION PROTOTYPES FOR PRIVATE FUNCTIONS WITH FILE LEVEL SCOPE
  ******************************************************************************/
@@ -112,7 +114,7 @@ void App_Init (void)
 
   // PORT_Type * portpointer[] = PORT_BASE_PTRS;
   // portpointer[PA]->ISFR |= 0xFFFFU;
-  
+
   // NVIC_EnableIRQ(PORTA_IRQn);
 
   // Inits for FRDM
@@ -144,7 +146,7 @@ void App_Run (void)
     case BUTTON_ePress:
       /* Act on release... */
       break;
-    
+
     case BUTTON_eRelease:
       if(prevButtonEv == BUTTON_ePress)
       {
@@ -174,15 +176,15 @@ void App_Run (void)
         ledOff(LED_3);
       }
       break;
-    
+
     default:
       break;
     }
-    
+
     prevButtonEv = newButtonEv;
 
   }
-  
+
 }
 
 
@@ -194,7 +196,7 @@ void App_Run (void)
 
 // static void cycle_led_color(void)
 // {
-//   switch (led_color) 
+//   switch (led_color)
 //   {
 //   case RED:
 //     if(led_on)
