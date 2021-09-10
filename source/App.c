@@ -19,6 +19,12 @@
  * CONSTANT AND MACRO DEFINITIONS USING #DEFINE
  ******************************************************************************/
 
+
+// APP DEVELOPMENT MODE
+#define APP_DEVELOPMENT_MODE 0
+
+
+
 // Connection between FRDM and DJ_Board (Here just for developement)
 // D = Digital, I = Input, O = Output, A = Active, H = High, L = Low, SIG = Signal
 
@@ -57,6 +63,14 @@ static ButtonEvent_t newButtonEv = BUTTON_noev;
 static EncoderEvent_t encoderEv = ENCODER_noev;
 static led_label_t oldFocus = LED_1;
 static led_label_t newFocus = LED_1;
+
+typedef enum {WAIT_ID, WAIT_PIN, BLOCK, UNLOCK, INTENSITY} state_t;
+
+typedef enum {STAY, INPUT_ID, VALID_PIN, INVALID_PIN} event_t;
+
+static state_t state;
+static event_t event;
+
 // static bool led_on = false;
 // static enum led_color_t led_color = RED;
 
@@ -145,48 +159,84 @@ void App_Init (void)
 /* Función que se llama constantemente en un ciclo infinito */
 void App_Run (void)
 {
-  if (encoder_hasEvent())
-  {
 
-    encoderEv = encoder_getEvent();
+	if(!APP_DEVELOPMENT_MODE)
+		{
+		if (encoder_hasEvent())
+	  {
 
-    switch (encoderEv)
-    {
-    case BUTTON_ePress:
-      /* Act on release... */
-      break;
+		encoderEv = encoder_getEvent();
 
-    case BUTTON_eRelease:
-      if(prevButtonEv == BUTTON_ePress)
-      {
-        ledToggle(LED_1);
-        // led_on = !led_on;
-      }
-      else if (prevButtonEv == BUTTON_eLKP)
-      {
-        // if(led_on)
-        //   cycle_led_color();
-        ledBlink(LED_1, 500U);
-        ledBlink(LED_2, 1000U);
-        ledBlink(LED_3, 100U);
-      }
-      break;
+		switch (encoderEv)
+		{
+		case BUTTON_ePress:
+		  /* Act on release... */
+		  break;
 
-    case ENCODER_eRightTurn:
-      newFocus = (led_label_t)((oldFocus + 2) % 3);
-      break;
+		case BUTTON_eRelease:
+		  if(prevButtonEv == BUTTON_ePress)
+		  {
+			ledToggle(LED_1);
+			// led_on = !led_on;
+		  }
+		  else if (prevButtonEv == BUTTON_eLKP)
+		  {
+			// if(led_on)
+			//   cycle_led_color();
+			ledBlink(LED_1, 500U);
+			ledBlink(LED_2, 1000U);
+			ledBlink(LED_3, 100U);
+		  }
+		  break;
 
-    case ENCODER_eLeftTurn:
-      newFocus = (led_label_t)((oldFocus + 1) % 3);
-      break;
+		case ENCODER_eRightTurn:
+		  newFocus = (led_label_t)((oldFocus + 2) % 3);
+		  break;
 
-    default:
-      break;
-    }
+		case ENCODER_eLeftTurn:
+		  newFocus = (led_label_t)((oldFocus + 1) % 3);
+		  break;
 
-    prevButtonEv = newButtonEv;
+		default:
+		  break;
+		}
 
-  }
+		prevButtonEv = newButtonEv;
+
+	  }
+	}
+	else
+	{
+		 switch(state){
+		    case WAIT_ID:
+		        //event = ;//fsm del input id (debe devolver INPUT_ID si se ingreso ID, sino STAY)
+		        if(event == INPUT_ID){
+		            state = WAIT_PIN;
+		        }
+		        break;
+		    case WAIT_PIN:
+		        //event = ;//fsm del input id (debe devolver VALID_PIN o INVALID_PIN si se ingreso PIN, sino STAY)
+		        if(event == VALID_PIN){
+		            state = UNLOCK;
+		        }
+		        else if (event == INVALID_PIN){
+		            state = BLOCK;
+		        }
+		        break;
+		    case UNLOCK:
+		        //show leds
+		        //wait 5 sec
+		        //state = WAIT_ID; //Back to start
+		        break;
+		    case BLOCK:
+		        //block for 5 sec - No lo veo necesario para ahora
+		        break;
+		    case INTENSITY:
+		        //if(intensity set){ state = WAIT_ID}
+		        break;
+
+		 }
+	}
 
 }
 
