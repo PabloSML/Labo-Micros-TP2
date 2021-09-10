@@ -45,7 +45,7 @@ void magneticReaderInit(void);
 /**
 * @brief Returns de last saved Data Track
 */
-ID getFullData(void);
+card_data_format getFullData(void);
 /**
 * @brief Returns de PAN Data
 */
@@ -58,3 +58,5 @@ uint8_t getPANlen(void);
 * @brief Borra el ID por timeout
 */
 void dataTimeOut(void);
+
+#endif // MAGNETIC__READER_H_

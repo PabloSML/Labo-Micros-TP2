@@ -10,7 +10,7 @@
 
 #include "gpio_pdrv.h"
 #include "board.h"
-#include "magnetic_reader.h"
+#include "magnetic_reader_drv.h"
 
 /*******************************************************************************
  * CONSTANT AND MACRO DEFINITIONS USING #DEFINE
@@ -86,7 +86,7 @@ void magneticReaderInit(void)
   gpioIRQ(PIN_MagClk   , PORT_eInterruptFalling, idClk, readData); //Los datos cambian en posedge
 }
 
-ID getFullData(void)
+card_data_format getFullData(void)
 {
   return cardData;
 }
@@ -116,7 +116,7 @@ static void magReaderHandler(void)
 {
   bitCounter = 0; //Reinicio mi contador
 
-  isdataOK = parseData();
+  bool isdataOK = parseData();
 
   if(isdataOK)
   {
@@ -139,16 +139,16 @@ static void uploadCardData(void)
   validCardData = true;
   uint8_t i = 0;
   //Cargo PAN
-  for(i = 0; parseData[i] != FS; ++i)
-    cardData.PAN[i] = parseData[1 + i];
+  for(i = 0; parsedRawData[i] != FS; ++i)
+    cardData.PAN[i] = parsedRawData[1 + i];
   //Cargo largo PAN
   cardData.PANLength = i;
   //Cargo Additional Data
   for(i = 0; i < 7; ++i)
-    cardData.additionalData[i] = parseData[cardData.PANLength + 2 + i];
+    cardData.additionalData[i] = parsedRawData[cardData.PANLength + 2 + i];
   //Cargo Discretionary Data
   for(i = 0; i < 8; ++i)
-    cardData.discretionaryData[i] = parseData[cardData.PANLength + 9 + i];
+    cardData.discretionaryData[i] = parsedRawData[cardData.PANLength + 9 + i];
 }
 
 static bool parseData(void)
@@ -170,7 +170,7 @@ static bool parseData(void)
     {
       parsedRawData[char_num] = LS2MS(&rawCardData[SSindex + char_num*BITS_PER_CHAR]);
     }
-    okstruct = chkParity(parseData);
+    okstruct = chkParity(parsedRawData);
   }
   return okstruct;
 }
@@ -183,10 +183,12 @@ static bool chkParity(uint8_t myData[])
     if(!(NUMBITS(myData[i])%2)) //No puede haber cant par de bits
       okparity = false;
   }
+  return okparity;
 }
 
 static uint8_t findSSIndex(void)
 {
+	uint8_t possibleSS;
   for(uint8_t i = 0; i < TRACK2_BITLEN; ++i)
   {
     possibleSS = LS2MS(&rawCardData[i]);
@@ -200,6 +202,7 @@ static uint8_t findSSIndex(void)
 
 static uint8_t findFSIndex(void)
 {
+	uint8_t possibleFS;
   for(uint8_t i = 0; i < TRACK2_BITLEN; ++i)
   {
     possibleFS = LS2MS(&rawCardData[i]);
@@ -213,6 +216,7 @@ static uint8_t findFSIndex(void)
 
 static uint8_t findESIndex(void)
 {
+	uint8_t possibleES;
   for(uint8_t i = 0; i < (TRACK2_BITLEN + 9*BITS_PER_CHAR); ++i)
   {
     possibleES = LS2MS(&rawCardData[i]);
@@ -230,4 +234,20 @@ static void clrRawData(void)
     rawCardData[i] = false;
   for(uint8_t i = 0; i < MAX_CHAR_LEN; ++i)
     parsedRawData[i] = 0;
+}
+
+static void clrCardData(void)
+{
+	uint8_t i = 0;
+	  //Borro PAN
+	  for(i = 0; i < 19; ++i)
+	    cardData.PAN[i] = 0;
+	  //Borro largo PAN
+	  cardData.PANLength = 0;
+	  //Borro Additional Data
+	  for(i = 0; i < 7; ++i)
+	    cardData.additionalData[i] = 0;
+	  //Borro Discretionary Data
+	  for(i = 0; i < 8; ++i)
+	    cardData.discretionaryData[i] = 0;
 }
