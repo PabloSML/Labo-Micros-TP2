@@ -51,7 +51,9 @@ static uint8_t  findSSIndex(void);
 static uint8_t  findFSIndex(void);
 static uint8_t  findESIndex(void);
 static bool     chkParity(uint8_t myData[]);
-
+static void     uploadCardData(void);
+static void     clrRawData(void);
+static void     clrCardData(void);
 /*******************************************************************************
  * ROM CONST VARIABLES WITH FILE LEVEL SCOPE
  ******************************************************************************/
@@ -60,10 +62,11 @@ static bool     chkParity(uint8_t myData[]);
  * STATIC VARIABLES AND CONST VARIABLES WITH FILE LEVEL SCOPE
  ******************************************************************************/
 
-static bool     cardSwipped = false;
-static uint32_t bitCounter = 0;
-static bool     cardData[TRACK2_BITLEN + 10*BITS_PER_CHAR]; //Le agrego 10 extra por si acaso
-static uint8_t  parsedData[MAX_CHAR_LEN];
+static uint32_t          bitCounter = 0;
+static bool              rawCardData[TRACK2_BITLEN + 10*BITS_PER_CHAR]; //Le agrego 10 extra por si acaso
+static uint8_t           parsedRawData[MAX_CHAR_LEN];
+static bool              validCardData = false;
+static card_data_format  cardData;
 
 /*******************************************************************************
 *                     GLOBAL FUNCTION DEFINITIONS
@@ -77,10 +80,34 @@ void magneticReaderInit(void)
   gpioMode(PIN_MagClk, INPUT);
 
   //Configuro IRQs
-  gpioIRQ(PIN_MagEnable, PORT_eInterruptRising , , magReaderHandler);
-  gpioIRQ(PIN_MagClk   , PORT_eInterruptFalling, , readData); //Los datos cambian en posedge
+  irq_id_t idE = irqGetId(PIN_MagEnable);
+  irq_id_t idClk = irqGetId(PIN_MagClk);
+  gpioIRQ(PIN_MagEnable, PORT_eInterruptRising,  idE, magReaderHandler);
+  gpioIRQ(PIN_MagClk   , PORT_eInterruptFalling, idClk, readData); //Los datos cambian en posedge
 }
 
+ID getFullData(void)
+{
+  return cardData;
+}
+
+void dataTimeOut(void)
+{
+  bitCounter = 0; //Reinicio mi contador
+  validCardData = false;
+  clrRawData();
+  clrCardData();
+}
+
+uint8_t * getPAN(void)
+{
+  return cardData.PAN;
+}
+
+uint8_t getPANlen(void)
+{
+  return cardData.PANLength;
+}
 /*******************************************************************************
 *                     LOCAL FUNCTION DEFINITIONS
 *******************************************************************************/
@@ -93,27 +120,43 @@ static void magReaderHandler(void)
 
   if(isdataOK)
   {
-    //Hay que hacer algo mas, que no se
-    clrData();
+    uploadCardData();
+    clrRawData();
   }
-
 }
 
 static void readData(void)
 {
-  if(gpioRead(PIN_MagEnable))
+  if(!gpioRead(PIN_MagEnable))
   {
-    cardData[bitCounter] = !gpioRead(PIN_MagData); // /DATA
+    rawCardData[bitCounter] = !gpioRead(PIN_MagData); // /DATA
     bitCounter++;
   }
+}
+
+static void uploadCardData(void)
+{
+  validCardData = true;
+  uint8_t i = 0;
+  //Cargo PAN
+  for(i = 0; parseData[i] != FS; ++i)
+    cardData.PAN[i] = parseData[1 + i];
+  //Cargo largo PAN
+  cardData.PANLength = i;
+  //Cargo Additional Data
+  for(i = 0; i < 7; ++i)
+    cardData.additionalData[i] = parseData[cardData.PANLength + 2 + i];
+  //Cargo Discretionary Data
+  for(i = 0; i < 8; ++i)
+    cardData.discretionaryData[i] = parseData[cardData.PANLength + 9 + i];
 }
 
 static bool parseData(void)
 {
   bool okstruct;
-  SSindex = findSSIndex();
-  FSindex = findFSIndex();
-  ESindex = findESIndex();
+  uint8_t SSindex = findSSIndex();
+  uint8_t FSindex = findFSIndex();
+  uint8_t ESindex = findESIndex();
   if(SSindex == CHAR_NOT_FOUND || FSindex == CHAR_NOT_FOUND || ESindex == CHAR_NOT_FOUND)
   {
     okstruct = false;
@@ -125,7 +168,7 @@ static bool parseData(void)
 
     for(uint8_t char_num = 0; char_num < realTracklen; ++char_num)
     {
-      parsedData[char_num] = LS2MS(&cardData[SSindex + char_num*BITS_PER_CHAR]);
+      parsedRawData[char_num] = LS2MS(&rawCardData[SSindex + char_num*BITS_PER_CHAR]);
     }
     okstruct = chkParity(parseData);
   }
@@ -142,11 +185,11 @@ static bool chkParity(uint8_t myData[])
   }
 }
 
-static uint8_t findIndex(uint8_t index)
+static uint8_t findSSIndex(void)
 {
   for(uint8_t i = 0; i < TRACK2_BITLEN; ++i)
   {
-    possibleSS = LS2MS(&cardData[i]);
+    possibleSS = LS2MS(&rawCardData[i]);
     if(possibleSS == SS)
     {
       return i;
@@ -159,7 +202,7 @@ static uint8_t findFSIndex(void)
 {
   for(uint8_t i = 0; i < TRACK2_BITLEN; ++i)
   {
-    possibleFS = LS2MS(&cardData[i]);
+    possibleFS = LS2MS(&rawCardData[i]);
     if(possibleFS == FS)
     {
       return i;
@@ -172,7 +215,7 @@ static uint8_t findESIndex(void)
 {
   for(uint8_t i = 0; i < (TRACK2_BITLEN + 9*BITS_PER_CHAR); ++i)
   {
-    possibleES = LS2MS(&cardData[i]);
+    possibleES = LS2MS(&rawCardData[i]);
     if(possibleES == ES)
     {
       return i;
@@ -181,10 +224,10 @@ static uint8_t findESIndex(void)
   return CHAR_NOT_FOUND;
 }
 
-static void clrData(void)
+static void clrRawData(void)
 {
   for (uint8_t i = 0; i < TRACK2_BITLEN + 10*BITS_PER_CHAR;++i)
-    cardData[i] = false;
+    rawCardData[i] = false;
   for(uint8_t i = 0; i < MAX_CHAR_LEN; ++i)
-    parsedData[i] = 0;
+    parsedRawData[i] = 0;
 }

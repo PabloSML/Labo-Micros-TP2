@@ -39,9 +39,7 @@
 #define PIN_STATUS0       PORTNUM2PIN(PB,9)   // D.O - AH
 #define PIN_STATUS1       PORTNUM2PIN(PC,17)  // D.O - AH
 
-#define PIN_MAG_EN        PORTNUM2PIN(PB,2) //
-#define PIN_MAG_DT 	      PORTNUM2PIN(PB,3) //
-#define PIN_MAG_CLK	      PORTNUM2PIN(PB,10) //
+
 /*******************************************************************************
  * FUNCTION PROTOTYPES FOR PRIVATE FUNCTIONS WITH FILE LEVEL SCOPE
  ******************************************************************************/
@@ -118,7 +116,7 @@ void App_Init (void)
 
   // PORT_Type * portpointer[] = PORT_BASE_PTRS;
   // portpointer[PA]->ISFR |= 0xFFFFU;
-
+  
   // NVIC_EnableIRQ(PORTA_IRQn);
 
   // Inits for FRDM
@@ -132,13 +130,13 @@ void App_Init (void)
   ledOn(LED_1);
   buttonInit();
   encoderInit();
-
+  
 
   // irq_id_t id = irqGetId(SW3);
   // gpioIRQ(SW3, PORT_eInterruptFalling, id, &ledToggle);
 
   hw_EnableInterrupts();
-
+  
 
 }
 
@@ -152,42 +150,75 @@ void App_Run (void)
 
     switch (encoderEv)
     {
-    case BUTTON_ePress:
-      /* Act on release... */
-      break;
-
-    case BUTTON_eRelease:
-      if(prevButtonEv == BUTTON_ePress)
-      {
-        ledToggle(LED_1);
-        // led_on = !led_on;
-      }
-      else if (prevButtonEv == BUTTON_eLKP)
-      {
-        // if(led_on)
-        //   cycle_led_color();
-        ledBlink(LED_1, 500U);
-        ledBlink(LED_2, 1000U);
-        ledBlink(LED_3, 100U);
-      }
-      break;
 
     case ENCODER_eRightTurn:
       newFocus = (led_label_t)((oldFocus + 2) % 3);
       break;
-
+    
     case ENCODER_eLeftTurn:
       newFocus = (led_label_t)((oldFocus + 1) % 3);
       break;
-
+    
     default:
       break;
     }
 
-    prevButtonEv = newButtonEv;
+    ledOff(oldFocus);
+    ledOn(newFocus);
+
+    oldFocus = newFocus;
 
   }
 
+
+  // if(button_hasEvent())
+  // {
+  //   newButtonEv = button_getEvent();
+
+  //   switch (newButtonEv)
+  //   {
+  //   case BUTTON_ePress:
+  //     /* Act on release... */
+  //     break;
+    
+  //   case BUTTON_eRelease:
+  //     if(prevButtonEv == BUTTON_ePress)
+  //     {
+  //       ledOn_timeout(LED_1, 3000U);
+  //       // led_on = !led_on;
+  //     }
+  //     else if (prevButtonEv == BUTTON_eLKP)
+  //     {
+  //       // if(led_on)
+  //       //   cycle_led_color();
+  //       ledBlink(LED_1, 500U);
+  //       ledBlink(LED_2, 1000U);
+  //       ledBlink(LED_3, 100U);
+  //     }
+  //     break;
+
+  //   case BUTTON_eLKP:
+  //     /* Act on release... */
+  //     break;
+
+  //   case BUTTON_eTypeMatic:
+  //     {
+  //       // if(led_on)
+  //       //   cycle_led_color();
+  //       ledOff(LED_1);
+  //       ledOff(LED_2);
+  //       ledOff(LED_3);
+  //     }
+  //     break;
+    
+  //   default:
+  //     break;
+  //   }
+    
+  //   prevButtonEv = newButtonEv;
+
+  // }
+  
 }
 
 
@@ -199,7 +230,7 @@ void App_Run (void)
 
 // static void cycle_led_color(void)
 // {
-//   switch (led_color)
+//   switch (led_color) 
 //   {
 //   case RED:
 //     if(led_on)

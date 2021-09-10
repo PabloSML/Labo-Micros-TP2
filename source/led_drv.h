@@ -87,6 +87,13 @@ void ledToggle(led_label_t led);
  */
 void ledBlink(led_label_t led, uint32_t period);
 
+/**
+ * @brief Turn on chosen LED for duration
+ * @param led Chosen LED
+ * @param duration Duration of ON Time (ms - Multiple of LED_ISR_PERIOD*LED_CANT)
+ */
+void ledOn_timeout(led_label_t led, uint32_t duration);
+
 /*******************************************************************************
  ******************************************************************************/
 

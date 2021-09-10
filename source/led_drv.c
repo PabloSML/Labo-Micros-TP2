@@ -39,14 +39,15 @@ typedef enum
 {
   OFF               = 0x00,   // Continually OFF
 	ON                = 0x01,   // Continually ON
-	BLINK      			  = 0x02    // Blinking
+	BLINK      			  = 0x02,   // Blinking
+  TIMEOUT           = 0x03    // On with timer
   
 } led_state_t;
 
 typedef struct
 {
   led_state_t   state;
-  ttick_t       blink_period;
+  ttick_t       led_timer;
   ttick_t       count;
   bool          isOn;         // Flag for blinking only         
 
@@ -143,8 +144,15 @@ void ledToggle(led_label_t led)
 void ledBlink(led_label_t led, uint32_t period)
 {
   leds[led].state = BLINK;
-  leds[led].blink_period = period/(LED_ISR_PERIOD*LED_CANT);
-  leds[led].count = leds[led].blink_period;
+  leds[led].led_timer = period/(LED_ISR_PERIOD*LED_CANT);
+  leds[led].count = leds[led].led_timer;
+}
+
+void ledOn_timeout(led_label_t led, uint32_t duration)
+{
+  leds[led].state = TIMEOUT;
+  leds[led].led_timer = duration/(LED_ISR_PERIOD*LED_CANT);
+  leds[led].count = leds[led].led_timer;
 }
 
 /*******************************************************************************
@@ -169,11 +177,21 @@ static void led_isr(void)
     if(!(--(leds[focus].count)))                            // Decremento el contador de ticks, termino?
     {
       leds[focus].isOn = !(leds[focus].isOn);               // Toggle blink state
-      leds[focus].count = leds[focus].blink_period;         // Reset blink timer
+      leds[focus].count = leds[focus].led_timer;         // Reset blink timer
     }
     selectLed((leds[focus].isOn)? (focus) : (LED_OFF));     // LED ON or OFF
     break;
   
+  case TIMEOUT:
+    if(!(--(leds[focus].count)))                            // Decremento el contador de ticks, termino?
+    {
+      leds[focus].state = OFF;                              // End TIMEOUT state
+      selectLed(LED_OFF);                                   // LED OFF
+    }
+    else
+      selectLed(focus);                                     // LED ON
+    break;
+
   default:
     break;
   }
