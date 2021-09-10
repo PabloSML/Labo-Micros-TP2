@@ -27,12 +27,14 @@
 // On Board User Switch
 #if (BOARD == FRDM)
 #define PIN_SW          PORTNUM2PIN(PA,4) // PTA4 SW3
-#elif (BOARD == DJ_BOARD)
-#define PIN_SW          PORTNUM2PIN(PA,1) // PTA1 on FRDM Molex
-#endif
-
 #define SW_ACTIVE       LOW   // Physical Pull-Up Included
 #define SW_INPUT_TYPE   INPUT
+#elif (BOARD == DJ_BOARD)
+#define PIN_SW          PORTNUM2PIN(PA,1) // PTA1 on FRDM Molex
+#define SW_ACTIVE       LOW   // Physical Pull-Up Included
+#define SW_INPUT_TYPE   INPUT
+#endif
+
 
 // Period for ISR
 #define BUTTON_ISR_PERIOD      10U   // 10 ms    - Software Debouncing

@@ -26,7 +26,7 @@
 typedef struct {
   uint8_t PAN[19]; //Primary Account No.
   uint8_t PANLength;
-  uint8_t additionalData[7]; //4: Date(YYMM) + 3: Service Code 
+  uint8_t additionalData[7]; //4: Date(YYMM) + 3: Service Code
   uint8_t discretionaryData[8]; //?
 } card_data_format;
 
@@ -42,3 +42,21 @@ typedef struct {
  * @brief Initialize magnetic reader
  */
 void magneticReaderInit(void);
+/**
+* @brief Returns de last saved Data Track
+*/
+card_data_format getFullData(void);
+/**
+* @brief Returns de PAN Data
+*/
+uint8_t * getPAN(void);
+/**
+* @brief Returns de PAN Data len
+*/
+uint8_t getPANlen(void);
+/**
+* @brief Borra el ID por timeout
+*/
+void dataTimeOut(void);
+
+#endif // MAGNETIC__READER_H_

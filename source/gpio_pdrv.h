@@ -95,6 +95,7 @@ irq_id_t irqGetId(pin_t pin);
  * @brief Configures how the pin reacts when an IRQ event ocurrs
  * @param pin the pin whose IRQ mode you wish to set (according PORTNUM2PIN)
  * @param irqMode disable, risingEdge, fallingEdge or bothEdges
+ * @param id Id for the IRQ
  * @param irqFun function to call on pin event
  * @return Registration succeed
  */
