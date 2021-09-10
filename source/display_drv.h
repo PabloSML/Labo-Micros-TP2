@@ -1,11 +1,11 @@
 /***************************************************************************//**
-  @file     7seg_drv.h
-  @brief    Seven Segment Driver Header File
+  @file     display_drv.h
+  @brief    DISPLAY Driver Header File
   @author   Grupo 4
  ******************************************************************************/
 
-#ifndef _7SEG_DRV_H_
-#define _7SEG_DRV_H_
+#ifndef _DISPLAY_DRV_H_
+#define _DISPLAY_DRV_H_
 
 /*******************************************************************************
  * INCLUDE HEADER FILES
@@ -15,22 +15,17 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
+
 /*******************************************************************************
  * CONSTANT AND MACRO DEFINITIONS USING #DEFINE
  ******************************************************************************/
 
+// Period for ISR
+#define DISPLAY_ISR_PERIOD      10U   // 20 ms
+
 /*******************************************************************************
  * ENUMERATIONS AND STRUCTURES AND TYPEDEFS
  ******************************************************************************/
-
-typedef enum
-{
-  SSEG_1    = 0x00,
-  SSEG_2    = 0x01,
-  SSEG_3    = 0x02,
-  SSEG_4    = 0x03,
-  SSEG_MAX  = 0x04
-} seven_seg_t;
 
 
 /*******************************************************************************
@@ -42,22 +37,26 @@ typedef enum
  ******************************************************************************/
 
 /**
- * @brief Initialize 7seg_drv and corresponding peripheral
+ * @brief Initialize display and corresponding peripheral
  * @return Initialization succeed
  */
-bool sevenSegInit(void);
+bool displayInit(void);
 
 // Non-Blocking services
 
 /**
- * @brief write character on 7 segment display
- * @param character to write, bool dpState true:on false:off, segment id
+ * @brief print message on display
+ * @param receive char pointer and bool scrolling
  */
-void sevenSegWrite(uint8_t character,bool dpState, seven_seg_t id);
+void dispMSG(const char * string, bool scrolling);
 
+/**
+ * @brief clear display
+ */
+void dispCLR(void);
 
 
 /*******************************************************************************
  ******************************************************************************/
 
-#endif // _7SEG_DRV_H_
+#endif // _DISPLAY_DRV_H_
