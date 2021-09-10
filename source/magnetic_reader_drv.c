@@ -28,8 +28,8 @@
 #define FS                (uint8_t)0xD
 #define ES                (uint8_t)0xF
 #define CHAR_NOT_FOUND    TRACK2_BITLEN
-#define LS2MS(data)     (uint8_t)((data[4]<<4) + (data[3]<<3) + (data[2]<<2) + (data[1]<<1) + data[0])
-#define NUMBITS(data)   (uint8_t)(((data&16)>>4) + (data&8)>>3) + ((data&4)>>2) + ((data&2)>>1) + (data&1))
+//#define LS2MS(data)     (uint8_t)((data[4]<<4) + (data[3]<<3) + (data[2]<<2) + (data[1]<<1) + data[0])
+//#define NUMBITS(data)   (uint8_t)(((data&16)>>4) + (data&8)>>3) + ((data&4)>>2) + ((data&2)>>1) + (data&1))
 /*******************************************************************************
  * ENUMERATIONS AND STRUCTURES AND TYPEDEFS
  ******************************************************************************/
@@ -54,6 +54,9 @@ static bool     chkParity(uint8_t myData[]);
 static void     uploadCardData(void);
 static void     clrRawData(void);
 static void     clrCardData(void);
+static uint8_t  reverseChar(bool data[]);
+static uint8_t  numBits(uint8_t data);
+
 /*******************************************************************************
  * ROM CONST VARIABLES WITH FILE LEVEL SCOPE
  ******************************************************************************/
@@ -67,7 +70,7 @@ static bool              rawCardData[TRACK2_BITLEN + 10*BITS_PER_CHAR]; //Le agr
 static uint8_t           parsedRawData[MAX_CHAR_LEN];
 static bool              validCardData = false;
 static card_data_format  cardData;
-
+static MagReaderEvent_t  ev = MAGREADER_noev;
 /*******************************************************************************
 *                     GLOBAL FUNCTION DEFINITIONS
 *******************************************************************************/
@@ -82,8 +85,20 @@ void magneticReaderInit(void)
   //Configuro IRQs
   irq_id_t idE = irqGetId(PIN_MagEnable);
   irq_id_t idClk = irqGetId(PIN_MagClk);
-  gpioIRQ(PIN_MagEnable, PORT_eInterruptRising,  idE, magReaderHandler);
+  gpioIRQ(PIN_MagEnable, PORT_eInterruptEither,  idE, magReaderHandler);
   gpioIRQ(PIN_MagClk   , PORT_eInterruptFalling, idClk, readData); //Los datos cambian en posedge
+}
+
+bool magreader_hasEvent(void)
+{
+  return ev;
+}
+
+ButtonEvent_t magreader_getEvent(void)
+{
+  MagReaderEvent_t  temp_ev = ev;
+  ev = MAGREADER_noev;
+  return temp;
 }
 
 card_data_format getFullData(void)
@@ -114,14 +129,26 @@ uint8_t getPANlen(void)
 
 static void magReaderHandler(void)
 {
-  bitCounter = 0; //Reinicio mi contador
-
-  bool isdataOK = parseData();
-
-  if(isdataOK)
+  if(gpioRead(PIN_MagEnable))
   {
-    uploadCardData();
-    clrRawData();
+    bitCounter = 0; //Reinicio mi contador
+
+    bool isdataOK = parseData();
+
+    if(isdataOK)
+    {
+      ev = MAGREADER_cardUpload;
+      uploadCardData();
+      clrRawData();
+    }
+    else
+    {
+      ev = MAGREADER_carderror;
+    }
+  }
+  else //Flanco descendente -> esta pasando
+  {
+    ev = MAGREADER_cardsliding;
   }
 }
 
@@ -168,7 +195,7 @@ static bool parseData(void)
 
     for(uint8_t char_num = 0; char_num < realTracklen; ++char_num)
     {
-      parsedRawData[char_num] = LS2MS(&rawCardData[SSindex + char_num*BITS_PER_CHAR]);
+      parsedRawData[char_num] = reverseChar(&rawCardData[SSindex + char_num*BITS_PER_CHAR]);
     }
     okstruct = chkParity(parsedRawData);
   }
@@ -180,7 +207,7 @@ static bool chkParity(uint8_t myData[])
   bool okparity = true; //Inocente hasta que se demuestre lo contrario
   for(uint8_t i = 0; myData[i]!=ES; ++i)
   {
-    if(!(NUMBITS(myData[i])%2)) //No puede haber cant par de bits
+    if(!(numBits(myData[i])%2)) //No puede haber cant par de bits
       okparity = false;
   }
   return okparity;
@@ -191,7 +218,7 @@ static uint8_t findSSIndex(void)
 	uint8_t possibleSS;
   for(uint8_t i = 0; i < TRACK2_BITLEN; ++i)
   {
-    possibleSS = LS2MS(&rawCardData[i]);
+    possibleSS = reverseChar(&rawCardData[i]);
     if(possibleSS == SS)
     {
       return i;
@@ -205,7 +232,7 @@ static uint8_t findFSIndex(void)
 	uint8_t possibleFS;
   for(uint8_t i = 0; i < TRACK2_BITLEN; ++i)
   {
-    possibleFS = LS2MS(&rawCardData[i]);
+    possibleFS = reverseChar(&rawCardData[i]);
     if(possibleFS == FS)
     {
       return i;
@@ -219,7 +246,7 @@ static uint8_t findESIndex(void)
 	uint8_t possibleES;
   for(uint8_t i = 0; i < (TRACK2_BITLEN + 9*BITS_PER_CHAR); ++i)
   {
-    possibleES = LS2MS(&rawCardData[i]);
+    possibleES = reverseChar(&rawCardData[i]);
     if(possibleES == ES)
     {
       return i;
@@ -250,4 +277,14 @@ static void clrCardData(void)
 	  //Borro Discretionary Data
 	  for(i = 0; i < 8; ++i)
 	    cardData.discretionaryData[i] = 0;
+}
+
+static uint8_t  reverseChar(bool data[])
+{
+  return((data[4]<<4) + (data[3]<<3) + (data[2]<<2) + (data[1]<<1) + data[0]);
+}
+
+static uint8_t  numBits(uint8_t data)
+{
+  return(((data&16)>>4) + ((data&8)>>3) + ((data&4)>>2) + ((data&2)>>1) + (data&1));
 }

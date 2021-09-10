@@ -30,6 +30,15 @@ typedef struct {
   uint8_t discretionaryData[8]; //?
 } card_data_format;
 
+//Eventos del lector de tarjeta
+typedef enum
+{
+  MAGREADER_noev            = 0x00,
+	MAGREADER_cardsliding     = 0x01, //La tarjeta esta pasando
+	MAGREADER_carderror				= 0x02, //Hubo un error en la lectura
+	MAGREADER_cardUpload 			= 0x03 //La lectura fue un exito!!
+
+} MagReaderEvent_t;
 /*******************************************************************************
  * VARIABLE PROTOTYPES WITH GLOBAL SCOPE
  ******************************************************************************/
@@ -55,8 +64,18 @@ uint8_t * getPAN(void);
 */
 uint8_t getPANlen(void);
 /**
-* @brief Borra el ID por timeout
+* @brief Borra el todo lo guardado por timeout
 */
 void dataTimeOut(void);
+/**
+ * @brief Query event
+ * @return True if event, false if not event
+ */
+bool magreader_hasEvent(void);
+/**
+ * @brief Get magreader event
+ * @return NOEV, CARDSLIDING, CARDERROR, CARDUPLOAD
+ */
+ButtonEvent_t magreader_getEvent(void);
 
 #endif // MAGNETIC__READER_H_
