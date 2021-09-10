@@ -76,6 +76,6 @@ bool magreader_hasEvent(void);
  * @brief Get magreader event
  * @return NOEV, CARDSLIDING, CARDERROR, CARDUPLOAD
  */
-ButtonEvent_t magreader_getEvent(void);
+MagReaderEvent_t magreader_getEvent(void);
 
 #endif // MAGNETIC__READER_H_

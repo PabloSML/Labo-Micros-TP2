@@ -94,11 +94,11 @@ bool magreader_hasEvent(void)
   return ev;
 }
 
-ButtonEvent_t magreader_getEvent(void)
+MagReaderEvent_t magreader_getEvent(void)
 {
   MagReaderEvent_t  temp_ev = ev;
   ev = MAGREADER_noev;
-  return temp;
+  return temp_ev;
 }
 
 card_data_format getFullData(void)
