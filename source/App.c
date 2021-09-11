@@ -15,6 +15,7 @@
 #include "gpio_pdrv.h"
 #include "hardware.h"
 #include "MK64F12.h"
+#include <string.h>
 
 /*******************************************************************************
  * CONSTANT AND MACRO DEFINITIONS USING #DEFINE
@@ -40,19 +41,6 @@
 #define PIN_STATUS0       PORTNUM2PIN(PB,9)   // D.O - AH
 #define PIN_STATUS1       PORTNUM2PIN(PC,17)  // D.O - AH
 
-#define APP_DEVELOPMENT_MODE 0
-
-
-/*******************************************************************************
- * ENUMERATIONS AND STRUCTURES AND TYPEDEFS
-******************************************************************************/
-
-typedef enum {WAIT_ID, WAIT_PIN, BLOCK, UNLOCK, INTENSITY} state_t;
-
-typedef enum {STAY, INPUT_ID, VALID_PIN, INVALID_PIN} event_t;
-
-static state_t state;
-static event_t event;
 
 /*******************************************************************************
  * FUNCTION PROTOTYPES FOR PRIVATE FUNCTIONS WITH FILE LEVEL SCOPE
@@ -158,89 +146,88 @@ void App_Init (void)
 void App_Run (void)
 {
 
-	run_logic_module();
+  const char* msg = "Hola Fran que tal";
+  uint8_t msg_len = strlen(msg);
+  dispMSG(msg, msg_len);
 
-	if(!APP_DEVELOPMENT_MODE)
-	{
-		if (encoder_hasEvent())
-	  {
+  if (encoder_hasEvent())  
+  {
 
-		encoderEv = encoder_getEvent();
+    encoderEv = encoder_getEvent();
 
-		switch (encoderEv)
-		{
-		case BUTTON_ePress:
-		  /* Act on release... */
-		  break;
+    switch (encoderEv)
+    {
 
-		case BUTTON_eRelease:
-		  if(prevButtonEv == BUTTON_ePress)
-		  {
-			ledToggle(LED_1);
-			// led_on = !led_on;
-		  }
-		  else if (prevButtonEv == BUTTON_eLKP)
-		  {
-			// if(led_on)
-			//   cycle_led_color();
-			ledBlink(LED_1, 500U);
-			ledBlink(LED_2, 1000U);
-			ledBlink(LED_3, 100U);
-		  }
-		  break;
+    case ENCODER_eRightTurn:
+      // newFocus = (led_label_t)((oldFocus + 2) % 3);
+      scrollRightMsg();
+      break;
+    
+    case ENCODER_eLeftTurn:
+      // newFocus = (led_label_t)((oldFocus + 1) % 3);
+      scrollLeftMsg();
+      break;
+    
+    default:
+      break;
+    }
 
-		case ENCODER_eRightTurn:
-		  newFocus = (led_label_t)((oldFocus + 2) % 3);
-		  break;
+    // ledOff(oldFocus);
+    // ledOn(newFocus);
 
-		case ENCODER_eLeftTurn:
-		  newFocus = (led_label_t)((oldFocus + 1) % 3);
-		  break;
+    // oldFocus = newFocus;
 
-		default:
-		  break;
-		}
+  }
 
-		prevButtonEv = newButtonEv;
 
-	  }
-	}
-	else
-	{
-		if(logic_module_hasEvent())
-			event=logic_module_getEvent();
+  // if(button_hasEvent())
+  // {
+  //   newButtonEv = button_getEvent();
 
-		 switch(state){
-		    case WAIT_ID:
-		        //event = ;//fsm del input id (debe devolver INPUT_ID si se ingreso ID, sino STAY)
-		        if(event == INPUT_ID){
-		            state = WAIT_PIN;
-		        }
-		        break;
-		    case WAIT_PIN:
-		        //event = ;//fsm del input id (debe devolver VALID_PIN o INVALID_PIN si se ingreso PIN, sino STAY)
-		        if(event == VALID_PIN){
-		            state = UNLOCK;
-		        }
-		        else if (event == INVALID_PIN){
-		            state = BLOCK;
-		        }
-		        break;
-		    case UNLOCK:
-		        //show leds
-		        //wait 5 sec
-		        //state = WAIT_ID; //Back to start
-		        break;
-		    case BLOCK:
-		        //block for 5 sec - No lo veo necesario para ahora
-		        break;
-		    case INTENSITY:
-		        //if(intensity set){ state = WAIT_ID}
-		        break;
+  //   switch (newButtonEv)
+  //   {
+  //   case BUTTON_ePress:
+  //     /* Act on release... */
+  //     break;
+    
+  //   case BUTTON_eRelease:
+  //     if(prevButtonEv == BUTTON_ePress)
+  //     {
+  //       ledOn_timeout(LED_1, 3000U);
+  //       // led_on = !led_on;
+  //     }
+  //     else if (prevButtonEv == BUTTON_eLKP)
+  //     {
+  //       // if(led_on)
+  //       //   cycle_led_color();
+  //       ledBlink(LED_1, 500U);
+  //       ledBlink(LED_2, 1000U);
+  //       ledBlink(LED_3, 100U);
+  //     }
+  //     break;
 
-		 }
-	}
+  //   case BUTTON_eLKP:
+  //     /* Act on release... */
+  //     break;
 
+  //   case BUTTON_eTypeMatic:
+  //     {
+  //       // if(led_on)
+  //       //   cycle_led_color();
+  //       ledOff(LED_1);
+  //       ledOff(LED_2);
+  //       ledOff(LED_3);
+  //     }
+  //     break;
+    
+  //   default:
+  //     break;
+  //   }
+    
+  //   prevButtonEv = newButtonEv;
+
+  // }
+  
 }
 
 

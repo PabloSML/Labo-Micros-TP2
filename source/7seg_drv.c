@@ -180,7 +180,7 @@ bool sevenSegInit(void)
 
 void scrollRightMsg(void)
 {
-  if(offset + DISP_CANT <= actual_size_msg)
+  if(offset + DISP_CANT < actual_size_msg)
     offset++;
 }
 
@@ -204,7 +204,7 @@ void dispMSG(const char * new_msg, uint8_t size_msg)
 
   for(uint8_t i = offset_char; i < (actual_size_msg + offset_char); i++)
   {
-    msg[i] = char2SSeg(new_msg*);
+    msg[i] = char2SSeg(*new_msg);
     new_msg++;
   }
 }
@@ -251,8 +251,8 @@ static void putCharacter(uint8_t ch, bool dp)
 static void selSSeg(seven_seg_t id)
 {
 
-  gpioWrite(SEL0,(uint8_t)id&(uint8_t)1);   \\probar si esto funciona...
-  gpioWrite(SEL1,(uint8_t)id&(uint8_t)2);
+  gpioWrite(PIN_SEL0, (uint8_t)id&(uint8_t)1);   // probar si esto funciona...
+  gpioWrite(PIN_SEL1, (uint8_t)id&(uint8_t)2);
 
 
   // switch(id)
