@@ -251,29 +251,9 @@ static void putCharacter(uint8_t ch, bool dp)
 static void selSSeg(seven_seg_t id)
 {
 
-  gpioWrite(PIN_SEL0, (uint8_t)id&(uint8_t)1);   // probar si esto funciona...
+  gpioWrite(PIN_SEL0, (uint8_t)id&(uint8_t)1); 
   gpioWrite(PIN_SEL1, (uint8_t)id&(uint8_t)2);
 
-
-  // switch(id)
-  // {
-  //   case DISP_1:
-  //     gpioWrite(PIN_SEL0, LOW);
-  //     gpioWrite(PIN_SEL1, LOW);
-  //     break;
-  //   case DISP_2:
-  //     gpioWrite(PIN_SEL0, HIGH);
-  //     gpioWrite(PIN_SEL1, LOW);
-  //     break;
-  //   case DISP_3:
-  //     gpioWrite(PIN_SEL0, LOW);
-  //     gpioWrite(PIN_SEL1, HIGH);
-  //     break;
-  //   case DISP_4:
-  //     gpioWrite(PIN_SEL0, HIGH);
-  //     gpioWrite(PIN_SEL1, HIGH);
-  //     break;
-  // }
 }
 
 static void sevenSegWrite(uint8_t character, bool dpState, seven_seg_t id)
