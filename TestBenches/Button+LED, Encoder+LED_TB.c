@@ -10,6 +10,7 @@
 // #include "board.h"
 #include "button_drv.h"
 #include "led_drv.h"
+#include "7seg_drv.h"
 #include "encoder_drv.h"
 #include "gpio_pdrv.h"
 #include "hardware.h"
@@ -22,7 +23,7 @@
 // Connection between FRDM and DJ_Board (Here just for developement)
 // D = Digital, I = Input, O = Output, A = Active, H = High, L = Low, SIG = Signal
 
-#define PIN_CSEGA         PORTNUM2PIN(PC,15)  // D.O - AH
+#define PIN_CSEGA         PORTNUM2PIN(PC,5)  // D.O - AH
 #define PIN_CSEGB         PORTNUM2PIN(PC,7)   // D.O - AH
 #define PIN_CSEGC         PORTNUM2PIN(PC,0)   // D.O - AH
 #define PIN_CSEGD         PORTNUM2PIN(PC,9)   // D.O - AH
@@ -75,31 +76,31 @@ void App_Init (void)
   SIM->SCGC5 |= SIM_SCGC5_PORTC_MASK;
   SIM->SCGC5 |= SIM_SCGC5_PORTE_MASK;
 
-  // Start 7-seg in OFF
-  gpioWrite(PIN_CSEGA, LOW);
-  gpioWrite(PIN_CSEGB, LOW);
-  gpioWrite(PIN_CSEGC, LOW);
-  gpioWrite(PIN_CSEGD, LOW);
-  gpioWrite(PIN_CSEGE, LOW);
-  gpioWrite(PIN_CSEGF, LOW);
-  gpioWrite(PIN_CSEGG, LOW);
-  gpioWrite(PIN_CSEGDP, LOW);
+  // // Start 7-seg in OFF
+  // gpioWrite(PIN_CSEGA, LOW);
+  // gpioWrite(PIN_CSEGB, LOW);    
+  // gpioWrite(PIN_CSEGC, LOW);
+  // gpioWrite(PIN_CSEGD, LOW);
+  // gpioWrite(PIN_CSEGE, LOW);
+  // gpioWrite(PIN_CSEGF, LOW);
+  // gpioWrite(PIN_CSEGG, LOW);
+  // gpioWrite(PIN_CSEGDP, LOW);
 
-  gpioWrite(PIN_SEL0, LOW);
-  gpioWrite(PIN_SEL1, LOW);
+  // gpioWrite(PIN_SEL0, LOW);
+  // gpioWrite(PIN_SEL1, LOW);
 
-  // Set 7-seg pins as Out
-  gpioMode(PIN_CSEGA, OUTPUT);
-  gpioMode(PIN_CSEGB, OUTPUT);
-  gpioMode(PIN_CSEGC, OUTPUT);
-  gpioMode(PIN_CSEGD, OUTPUT);
-  gpioMode(PIN_CSEGE, OUTPUT);
-  gpioMode(PIN_CSEGF, OUTPUT);
-  gpioMode(PIN_CSEGG, OUTPUT);
-  gpioMode(PIN_CSEGDP, OUTPUT);
+  // // Set 7-seg pins as Out
+  // gpioMode(PIN_CSEGA, OUTPUT);
+  // gpioMode(PIN_CSEGB, OUTPUT);
+  // gpioMode(PIN_CSEGC, OUTPUT);
+  // gpioMode(PIN_CSEGD, OUTPUT);
+  // gpioMode(PIN_CSEGE, OUTPUT);
+  // gpioMode(PIN_CSEGF, OUTPUT);
+  // gpioMode(PIN_CSEGG, OUTPUT);
+  // gpioMode(PIN_CSEGDP, OUTPUT);
 
-  gpioMode(PIN_SEL0, OUTPUT);
-  gpioMode(PIN_SEL1, OUTPUT);
+  // gpioMode(PIN_SEL0, OUTPUT);
+  // gpioMode(PIN_SEL1, OUTPUT);
 
   // // Start LEDs OFF
   // gpioWrite(PIN_STATUS0, LOW);
@@ -127,9 +128,9 @@ void App_Init (void)
 
   // Inits for DJ_BOARD
   ledInit();
-  ledOn(LED_1);
   buttonInit();
   encoderInit();
+  sevenSegInit();
   
 
   // irq_id_t id = irqGetId(SW3);
@@ -143,32 +144,37 @@ void App_Init (void)
 /* Función que se llama constantemente en un ciclo infinito */
 void App_Run (void)
 {
-  if (encoder_hasEvent())
-  {
 
-    encoderEv = encoder_getEvent();
+  const char palabra[4] = {'F', 'R', 'A', 'N'};
+  dispMSG(palabra);
 
-    switch (encoderEv)
-    {
 
-    case ENCODER_eRightTurn:
-      newFocus = (led_label_t)((oldFocus + 2) % 3);
-      break;
+  // if (encoder_hasEvent())  
+  // {
+
+  //   encoderEv = encoder_getEvent();
+
+  //   switch (encoderEv)
+  //   {
+
+  //   case ENCODER_eRightTurn:
+  //     newFocus = (led_label_t)((oldFocus + 2) % 3);
+  //     break;
     
-    case ENCODER_eLeftTurn:
-      newFocus = (led_label_t)((oldFocus + 1) % 3);
-      break;
+  //   case ENCODER_eLeftTurn:
+  //     newFocus = (led_label_t)((oldFocus + 1) % 3);
+  //     break;
     
-    default:
-      break;
-    }
+  //   default:
+  //     break;
+  //   }
 
-    ledOff(oldFocus);
-    ledOn(newFocus);
+  //   ledOff(oldFocus);
+  //   ledOn(newFocus);
 
-    oldFocus = newFocus;
+  //   oldFocus = newFocus;
 
-  }
+  // }
 
 
   // if(button_hasEvent())

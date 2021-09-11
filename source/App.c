@@ -23,7 +23,7 @@
 // Connection between FRDM and DJ_Board (Here just for developement)
 // D = Digital, I = Input, O = Output, A = Active, H = High, L = Low, SIG = Signal
 
-#define PIN_CSEGA         PORTNUM2PIN(PC,15)  // D.O - AH
+#define PIN_CSEGA         PORTNUM2PIN(PC,5)  // D.O - AH
 #define PIN_CSEGB         PORTNUM2PIN(PC,7)   // D.O - AH
 #define PIN_CSEGC         PORTNUM2PIN(PC,0)   // D.O - AH
 #define PIN_CSEGD         PORTNUM2PIN(PC,9)   // D.O - AH
