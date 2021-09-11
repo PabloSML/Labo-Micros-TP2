@@ -10,21 +10,15 @@
 // #include "board.h"
 #include "button_drv.h"
 #include "led_drv.h"
+#include "7seg_drv.h"
 #include "encoder_drv.h"
 #include "gpio_pdrv.h"
 #include "hardware.h"
 #include "MK64F12.h"
-#include "logic_module.h"
 
 /*******************************************************************************
  * CONSTANT AND MACRO DEFINITIONS USING #DEFINE
  ******************************************************************************/
-
-
-// APP DEVELOPMENT MODE
-#define APP_DEVELOPMENT_MODE 0
-
-
 
 // Connection between FRDM and DJ_Board (Here just for developement)
 // D = Digital, I = Input, O = Output, A = Active, H = High, L = Low, SIG = Signal
@@ -46,9 +40,7 @@
 #define PIN_STATUS0       PORTNUM2PIN(PB,9)   // D.O - AH
 #define PIN_STATUS1       PORTNUM2PIN(PC,17)  // D.O - AH
 
-#define PIN_MAG_EN        PORTNUM2PIN(PB,2) //
-#define PIN_MAG_DT 	      PORTNUM2PIN(PB,3) //
-#define PIN_MAG_CLK	      PORTNUM2PIN(PB,10) //
+
 /*******************************************************************************
  * FUNCTION PROTOTYPES FOR PRIVATE FUNCTIONS WITH FILE LEVEL SCOPE
  ******************************************************************************/
@@ -64,20 +56,6 @@ static ButtonEvent_t newButtonEv = BUTTON_noev;
 static EncoderEvent_t encoderEv = ENCODER_noev;
 static led_label_t oldFocus = LED_1;
 static led_label_t newFocus = LED_1;
-
-typedef enum {WAIT_ID, WAIT_PIN, BLOCK, UNLOCK, INTENSITY} state_t;
-
-typedef enum {
-	APP_No_Event=0x00,
-	APP_stay=0x01,
-	APP_INPUT_ID=0x02,
-	APP_VALID_PIN=0X03,
-	APP_INVALID_PIN=0X04
-} APP_event_t;
-
-static state_t state;
-static event_t event;
-
 // static bool led_on = false;
 // static enum led_color_t led_color = RED;
 
@@ -98,31 +76,31 @@ void App_Init (void)
   SIM->SCGC5 |= SIM_SCGC5_PORTC_MASK;
   SIM->SCGC5 |= SIM_SCGC5_PORTE_MASK;
 
-  // Start 7-seg in OFF
-  gpioWrite(PIN_CSEGA, LOW);
-  gpioWrite(PIN_CSEGB, LOW);
-  gpioWrite(PIN_CSEGC, LOW);
-  gpioWrite(PIN_CSEGD, LOW);
-  gpioWrite(PIN_CSEGE, LOW);
-  gpioWrite(PIN_CSEGF, LOW);
-  gpioWrite(PIN_CSEGG, LOW);
-  gpioWrite(PIN_CSEGDP, LOW);
+  // // Start 7-seg in OFF
+  // gpioWrite(PIN_CSEGA, LOW);
+  // gpioWrite(PIN_CSEGB, LOW);    
+  // gpioWrite(PIN_CSEGC, LOW);
+  // gpioWrite(PIN_CSEGD, LOW);
+  // gpioWrite(PIN_CSEGE, LOW);
+  // gpioWrite(PIN_CSEGF, LOW);
+  // gpioWrite(PIN_CSEGG, LOW);
+  // gpioWrite(PIN_CSEGDP, LOW);
 
-  gpioWrite(PIN_SEL0, LOW);
-  gpioWrite(PIN_SEL1, LOW);
+  // gpioWrite(PIN_SEL0, LOW);
+  // gpioWrite(PIN_SEL1, LOW);
 
-  // Set 7-seg pins as Out
-  gpioMode(PIN_CSEGA, OUTPUT);
-  gpioMode(PIN_CSEGB, OUTPUT);
-  gpioMode(PIN_CSEGC, OUTPUT);
-  gpioMode(PIN_CSEGD, OUTPUT);
-  gpioMode(PIN_CSEGE, OUTPUT);
-  gpioMode(PIN_CSEGF, OUTPUT);
-  gpioMode(PIN_CSEGG, OUTPUT);
-  gpioMode(PIN_CSEGDP, OUTPUT);
+  // // Set 7-seg pins as Out
+  // gpioMode(PIN_CSEGA, OUTPUT);
+  // gpioMode(PIN_CSEGB, OUTPUT);
+  // gpioMode(PIN_CSEGC, OUTPUT);
+  // gpioMode(PIN_CSEGD, OUTPUT);
+  // gpioMode(PIN_CSEGE, OUTPUT);
+  // gpioMode(PIN_CSEGF, OUTPUT);
+  // gpioMode(PIN_CSEGG, OUTPUT);
+  // gpioMode(PIN_CSEGDP, OUTPUT);
 
-  gpioMode(PIN_SEL0, OUTPUT);
-  gpioMode(PIN_SEL1, OUTPUT);
+  // gpioMode(PIN_SEL0, OUTPUT);
+  // gpioMode(PIN_SEL1, OUTPUT);
 
   // // Start LEDs OFF
   // gpioWrite(PIN_STATUS0, LOW);
@@ -139,7 +117,7 @@ void App_Init (void)
 
   // PORT_Type * portpointer[] = PORT_BASE_PTRS;
   // portpointer[PA]->ISFR |= 0xFFFFU;
-
+  
   // NVIC_EnableIRQ(PORTA_IRQn);
 
   // Inits for FRDM
@@ -148,23 +126,18 @@ void App_Init (void)
   // ledInit(LED_BLUE);
   // switchInit(SW3);
 
-
-    // Inits for DJ_BOARD
-  //ledInit();  moved to logic_module_init()
-  //ledOn(LED_1); moved to logic_module_init()
-  //buttonInit(); moved to logic_module_init()
-  //encoderInit(); moved to logic_module_init()
-
-  if(!logic_module_init())
-	printf("Error al inicializar");
-
-
+  // Inits for DJ_BOARD
+  ledInit();
+  buttonInit();
+  encoderInit();
+  sevenSegInit();
+  
 
   // irq_id_t id = irqGetId(SW3);
   // gpioIRQ(SW3, PORT_eInterruptFalling, id, &ledToggle);
 
   hw_EnableInterrupts();
-
+  
 
 }
 
@@ -172,84 +145,86 @@ void App_Init (void)
 void App_Run (void)
 {
 
-	if(!APP_DEVELOPMENT_MODE)
-	{
-		if (encoder_hasEvent())
-	  {
+  const char palabra[4] = {'F', 'R', 'A', 'N'};
+  dispMSG(palabra);
 
-		encoderEv = encoder_getEvent();
 
-		switch (encoderEv)
-		{
-		case BUTTON_ePress:
-		  /* Act on release... */
-		  break;
+  // if (encoder_hasEvent())  
+  // {
 
-		case BUTTON_eRelease:
-		  if(prevButtonEv == BUTTON_ePress)
-		  {
-			ledToggle(LED_1);
-			// led_on = !led_on;
-		  }
-		  else if (prevButtonEv == BUTTON_eLKP)
-		  {
-			// if(led_on)
-			//   cycle_led_color();
-			ledBlink(LED_1, 500U);
-			ledBlink(LED_2, 1000U);
-			ledBlink(LED_3, 100U);
-		  }
-		  break;
+  //   encoderEv = encoder_getEvent();
 
-		case ENCODER_eRightTurn:
-		  newFocus = (led_label_t)((oldFocus + 2) % 3);
-		  break;
+  //   switch (encoderEv)
+  //   {
 
-		case ENCODER_eLeftTurn:
-		  newFocus = (led_label_t)((oldFocus + 1) % 3);
-		  break;
+  //   case ENCODER_eRightTurn:
+  //     newFocus = (led_label_t)((oldFocus + 2) % 3);
+  //     break;
+    
+  //   case ENCODER_eLeftTurn:
+  //     newFocus = (led_label_t)((oldFocus + 1) % 3);
+  //     break;
+    
+  //   default:
+  //     break;
+  //   }
 
-		default:
-		  break;
-		}
+  //   ledOff(oldFocus);
+  //   ledOn(newFocus);
 
-		prevButtonEv = newButtonEv;
+  //   oldFocus = newFocus;
 
-	  }
-	}
-	else
-	{
-		 switch(state){
-		    case WAIT_ID:
-		        //event = ;//fsm del input id (debe devolver INPUT_ID si se ingreso ID, sino STAY)
-		        if(event == INPUT_ID){
-		            state = WAIT_PIN;
-		        }
-		        break;
-		    case WAIT_PIN:
-		        //event = ;//fsm del input id (debe devolver VALID_PIN o INVALID_PIN si se ingreso PIN, sino STAY)
-		        if(event == VALID_PIN){
-		            state = UNLOCK;
-		        }
-		        else if (event == INVALID_PIN){
-		            state = BLOCK;
-		        }
-		        break;
-		    case UNLOCK:
-		        //show leds
-		        //wait 5 sec
-		        //state = WAIT_ID; //Back to start
-		        break;
-		    case BLOCK:
-		        //block for 5 sec - No lo veo necesario para ahora
-		        break;
-		    case INTENSITY:
-		        //if(intensity set){ state = WAIT_ID}
-		        break;
+  // }
 
-		 }
-	}
 
+  // if(button_hasEvent())
+  // {
+  //   newButtonEv = button_getEvent();
+
+  //   switch (newButtonEv)
+  //   {
+  //   case BUTTON_ePress:
+  //     /* Act on release... */
+  //     break;
+    
+  //   case BUTTON_eRelease:
+  //     if(prevButtonEv == BUTTON_ePress)
+  //     {
+  //       ledOn_timeout(LED_1, 3000U);
+  //       // led_on = !led_on;
+  //     }
+  //     else if (prevButtonEv == BUTTON_eLKP)
+  //     {
+  //       // if(led_on)
+  //       //   cycle_led_color();
+  //       ledBlink(LED_1, 500U);
+  //       ledBlink(LED_2, 1000U);
+  //       ledBlink(LED_3, 100U);
+  //     }
+  //     break;
+
+  //   case BUTTON_eLKP:
+  //     /* Act on release... */
+  //     break;
+
+  //   case BUTTON_eTypeMatic:
+  //     {
+  //       // if(led_on)
+  //       //   cycle_led_color();
+  //       ledOff(LED_1);
+  //       ledOff(LED_2);
+  //       ledOff(LED_3);
+  //     }
+  //     break;
+    
+  //   default:
+  //     break;
+  //   }
+    
+  //   prevButtonEv = newButtonEv;
+
+  // }
+  
 }
 
 
@@ -261,7 +236,7 @@ void App_Run (void)
 
 // static void cycle_led_color(void)
 // {
-//   switch (led_color)
+//   switch (led_color) 
 //   {
 //   case RED:
 //     if(led_on)
