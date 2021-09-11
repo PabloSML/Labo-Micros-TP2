@@ -31,11 +31,12 @@
 #define PIN_SEL1          PORTNUM2PIN(PC,2)   // D.O - AH
 
 #define NUMBER_OF_SEGMENTS 6
-#define MAX_LENGTH_MESSAGE 20
 
 #define SEGMENT_ACTIVE   HIGH 
 
 #define DP_ACTIVE  HIGH
+
+#define MAX_LENGTH_MESSAGE 20
 
 /*******************************************************************************
  * ENUMERATIONS AND STRUCTURES AND TYPEDEFS
@@ -88,6 +89,8 @@ static void cycle_focus(void);
  * ROM CONST VARIABLES WITH FILE LEVEL SCOPE
  ******************************************************************************/
 
+
+
 /*******************************************************************************
  * STATIC VARIABLES AND CONST VARIABLES WITH FILE LEVEL SCOPE
  ******************************************************************************/
@@ -98,7 +101,7 @@ static const uint8_t seven_seg_digits_decode_gfedcba[75]= {
 /*  0     1     2     3     4     5     6     7     8     9     :     ;     */
     0x3F, 0x06, 0x5B, 0x4F, 0x66, 0x6D, 0x7D, 0x07, 0x7F, 0x6F, 0x00, 0x00, 
 /*  <     =     >     ?     @     A     B     C     D     E     F     G     */
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x77, 0x7C, 0x39, 0x5E, 0x79, 0x71, 0x3D, 
+    0x00, 0x40, 0x00, 0x00, 0x00, 0x77, 0x7C, 0x39, 0x5E, 0x79, 0x71, 0x3D, 
 /*  H     I     J     K     L     M     N     O     P     Q     R     S     */
     0x76, 0x30, 0x1E, 0x75, 0x38, 0x55, 0x54, 0x5C, 0x73, 0x67, 0x50, 0x6D, 
 /*  T     U     V     W     X     Y     Z     [     \     ]     ^     _     */
@@ -113,7 +116,6 @@ static const uint8_t seven_seg_digits_decode_gfedcba[75]= {
 
 static const uint8_t gfedcbaPins[]= {PIN_CSEGA,PIN_CSEGB,PIN_CSEGC,PIN_CSEGD,PIN_CSEGE,PIN_CSEGF,PIN_CSEGG};
 
-static const uint8_t selPins[] = {PIN_SEL0, PIN_SEL1};
 
 //Refresh display variables..
 static tim_id_t timerId;
@@ -122,6 +124,8 @@ static ttick_t timerTicks = DISPLAY_ISR_PERIOD;
 //Message variable
 static uint8_t msg[MAX_LENGTH_MESSAGE];
 static uint8_t actual_size_msg;
+static bool dp_state[4];
+static uint8_t offset;
 
 // Currently focused display unit
 static seven_seg_t actual7SegDisp = DISP_1;
@@ -141,6 +145,8 @@ bool sevenSegInit(void)
     
     gpioWrite(PIN_SEL0, LOW);
     gpioWrite(PIN_SEL1, LOW);
+
+    gpioWrite(PIN_CSEGDP,!DP_ACTIVE);
 
     for(uint8_t i = 0; i <= NUMBER_OF_SEGMENTS;i++)
     {
@@ -171,21 +177,42 @@ bool sevenSegInit(void)
   return yaInit;
 }
 
-//tenia la idea de q reciba puntero y size, seria mas rapido
-// pero si le pasas mal el size puede terminar leyendo basura..
-void dispMSG(const char newMsg[])
-{
-  // uint8_t size_msg = sizeof(newMsg);
-  uint8_t size_msg = 4;
 
+void scrollRightMsg(void)
+{
+  if(offset + DISP_CANT <= actual_size_msg)
+    offset++;
+}
+
+
+void scrollLeftMsg(void)
+{
+  if(offset)
+    offset--;
+}
+
+void dispMSG(const char * new_msg, uint8_t size_msg)
+{
   actual_size_msg = (size_msg > MAX_LENGTH_MESSAGE) ? MAX_LENGTH_MESSAGE:size_msg;
 
-  for(uint8_t i = 0; i < actual_size_msg; i++)
+  uint8_t offset_char = 0;
+  if(actual_size_msg < DISP_CANT)
   {
-    msg[i] = char2SSeg(newMsg[i]);
+    offset_char = DISP_CANT-actual_size_msg;
+    dispCLR();
+  }
+
+  for(uint8_t i = offset_char; i < (actual_size_msg + offset_char); i++)
+  {
+    msg[i] = char2SSeg(new_msg*);
+    new_msg++;
   }
 }
 
+void dispDP(seven_seg_t disp, bool state)
+{
+  dp_state[disp] = state;
+}
 
 
 void dispCLR(void)
@@ -223,30 +250,30 @@ static void putCharacter(uint8_t ch, bool dp)
 
 static void selSSeg(seven_seg_t id)
 {
-/*
-*   gpioWrite(SEL0,(uint8_t)id&(uint8_t)1);   \\probar si esto funciona...
-*   gpioWrite(SEL1,(uint8_t)id&(uint8_t)2);
-*/
 
-  switch(id)
-  {
-    case DISP_1:
-      gpioWrite(PIN_SEL0, LOW);
-      gpioWrite(PIN_SEL1, LOW);
-      break;
-    case DISP_2:
-      gpioWrite(PIN_SEL0, HIGH);
-      gpioWrite(PIN_SEL1, LOW);
-      break;
-    case DISP_3:
-      gpioWrite(PIN_SEL0, LOW);
-      gpioWrite(PIN_SEL1, HIGH);
-      break;
-    case DISP_4:
-      gpioWrite(PIN_SEL0, HIGH);
-      gpioWrite(PIN_SEL1, HIGH);
-      break;
-  }
+  gpioWrite(SEL0,(uint8_t)id&(uint8_t)1);   \\probar si esto funciona...
+  gpioWrite(SEL1,(uint8_t)id&(uint8_t)2);
+
+
+  // switch(id)
+  // {
+  //   case DISP_1:
+  //     gpioWrite(PIN_SEL0, LOW);
+  //     gpioWrite(PIN_SEL1, LOW);
+  //     break;
+  //   case DISP_2:
+  //     gpioWrite(PIN_SEL0, HIGH);
+  //     gpioWrite(PIN_SEL1, LOW);
+  //     break;
+  //   case DISP_3:
+  //     gpioWrite(PIN_SEL0, LOW);
+  //     gpioWrite(PIN_SEL1, HIGH);
+  //     break;
+  //   case DISP_4:
+  //     gpioWrite(PIN_SEL0, HIGH);
+  //     gpioWrite(PIN_SEL1, HIGH);
+  //     break;
+  // }
 }
 
 static void sevenSegWrite(uint8_t character, bool dpState, seven_seg_t id)
@@ -258,21 +285,12 @@ static void sevenSegWrite(uint8_t character, bool dpState, seven_seg_t id)
 
 static void display_refresh_isr(void) //Por ahora solo maneja 4 caracteres y no scrollea..
 {
-  // if(actual_size_msg<CSEG_CANT)
-  // {
-  //   actual7SegDisp = CSEG_CANT - actual_size_msg; //offset display [][][][1]
-  // }
 
-  sevenSegWrite(msg[actual7SegDisp], !DP_ACTIVE, actual7SegDisp);  //write character
+  sevenSegWrite(msg[actual7SegDisp + offset], dp_state[actual7SegDisp], actual7SegDisp);  //write character
   
   cycle_focus();
 }
 
-
-/*
-
-
-*/
 
 static void cycle_focus(void)
 {
