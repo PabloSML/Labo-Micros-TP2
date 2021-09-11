@@ -20,7 +20,8 @@
  ******************************************************************************/
 
 // Period for ISR
-#define DISPLAY_ISR_PERIOD      2U   // 20 ms
+#define DISPLAY_ISR_PERIOD      2U   
+
 
 /*******************************************************************************
  * ENUMERATIONS AND STRUCTURES AND TYPEDEFS
@@ -32,7 +33,7 @@ typedef enum
   DISP_2    = 0x01,
   DISP_3    = 0x02,
   DISP_4    = 0x03,
-  DISP_CANT  = 0x04 
+  DISP_CANT
 } seven_seg_t;
 
 
@@ -54,15 +55,33 @@ bool sevenSegInit(void);
 
 
 /**
- * @brief print message on display
- * @param receive char pointer
+ * @brief print message on display. Maximo size de msg MAX_LENGTH_MESSAGE
+ * @param char pointer to string
+ * @param uint8_t size of msg
  */
-void dispMSG(const char newMsg[]);
+void dispMSG(const char * new_msg, uint8_t size_msg);
+
+/**
+ * @brief set/clr decimal point
+ * @param seven_seg_t id of display position
+ * @param bool state of DP, true:ON, false:OFF
+ */
+void dispDP(seven_seg_t disp, bool state);
 
 /**
  * @brief clear display
  */
 void dispCLR(void);
+
+/**
+ * @brief move msg to right 
+ */
+void scrollRightMsg(void);
+
+/**
+ * @brief move msg to left 
+ */
+void scrollLeftMsg(void);
 
 
 /*******************************************************************************
