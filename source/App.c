@@ -161,7 +161,7 @@ void App_Run (void)
 {
 
 	if(!APP_DEVELOPMENT_MODE)
-		{
+	{
 		if (encoder_hasEvent())
 	  {
 
