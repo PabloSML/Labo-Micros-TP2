@@ -19,6 +19,9 @@
  * CONSTANT AND MACRO DEFINITIONS USING #DEFINE
  ******************************************************************************/
 
+// Period for ISR
+#define DISPLAY_ISR_PERIOD      10U   // 20 ms
+
 /*******************************************************************************
  * ENUMERATIONS AND STRUCTURES AND TYPEDEFS
  ******************************************************************************/
@@ -49,12 +52,17 @@ bool sevenSegInit(void);
 
 // Non-Blocking services
 
-/**
- * @brief write character on 7 segment display
- * @param character to write, bool dpState true:on false:off, segment id
- */
-void sevenSegWrite(uint8_t character,bool dpState, seven_seg_t id);
 
+/**
+ * @brief print message on display
+ * @param receive char pointer and bool scrolling
+ */
+void dispMSG(const char string[], bool scrolling);
+
+/**
+ * @brief clear display
+ */
+void dispCLR(void);
 
 
 /*******************************************************************************
