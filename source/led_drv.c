@@ -166,7 +166,7 @@ static void led_isr(void)
   switch (leds[focus].state)
   {
   case OFF:
-    selectLed(LED_OFF);
+    selectLed(LED_OFF);    
     break;
   
   case ON:

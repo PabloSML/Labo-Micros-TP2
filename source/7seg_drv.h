@@ -20,7 +20,7 @@
  ******************************************************************************/
 
 // Period for ISR
-#define DISPLAY_ISR_PERIOD      10U   // 20 ms
+#define DISPLAY_ISR_PERIOD      2U   // 20 ms
 
 /*******************************************************************************
  * ENUMERATIONS AND STRUCTURES AND TYPEDEFS
@@ -28,11 +28,11 @@
 
 typedef enum
 {
-  SSEG_1    = 0x00,
-  SSEG_2    = 0x01,
-  SSEG_3    = 0x02,
-  SSEG_4    = 0x03,
-  SSEG_MAX  = 0x04
+  DISP_1    = 0x00,
+  DISP_2    = 0x01,
+  DISP_3    = 0x02,
+  DISP_4    = 0x03,
+  DISP_CANT  = 0x04 
 } seven_seg_t;
 
 
@@ -55,9 +55,9 @@ bool sevenSegInit(void);
 
 /**
  * @brief print message on display
- * @param receive char pointer and bool scrolling
+ * @param receive char pointer
  */
-void dispMSG(const char string[], bool scrolling);
+void dispMSG(const char newMsg[]);
 
 /**
  * @brief clear display
