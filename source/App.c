@@ -172,6 +172,8 @@ void App_Init (void)
 void App_Run (void)
 {
 
+	run_logic_module();
+
 	if(!APP_DEVELOPMENT_MODE)
 	{
 		if (encoder_hasEvent())
