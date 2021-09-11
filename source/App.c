@@ -40,6 +40,19 @@
 #define PIN_STATUS0       PORTNUM2PIN(PB,9)   // D.O - AH
 #define PIN_STATUS1       PORTNUM2PIN(PC,17)  // D.O - AH
 
+#define APP_DEVELOPMENT_MODE 0
+
+
+/*******************************************************************************
+ * ENUMERATIONS AND STRUCTURES AND TYPEDEFS
+******************************************************************************/
+
+typedef enum {WAIT_ID, WAIT_PIN, BLOCK, UNLOCK, INTENSITY} state_t;
+
+typedef enum {STAY, INPUT_ID, VALID_PIN, INVALID_PIN} event_t;
+
+static state_t state;
+static event_t event;
 
 /*******************************************************************************
  * FUNCTION PROTOTYPES FOR PRIVATE FUNCTIONS WITH FILE LEVEL SCOPE

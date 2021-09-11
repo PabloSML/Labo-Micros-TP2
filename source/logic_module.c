@@ -164,7 +164,7 @@ void run_logic_module(void){
 				//if(intensity set){ state = WAIT_ID}
 				break;
 
-	}
+		}
 }
 
 
