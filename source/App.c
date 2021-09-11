@@ -14,6 +14,7 @@
 #include "gpio_pdrv.h"
 #include "hardware.h"
 #include "MK64F12.h"
+#include "logic_module.h"
 
 /*******************************************************************************
  * CONSTANT AND MACRO DEFINITIONS USING #DEFINE
@@ -66,7 +67,13 @@ static led_label_t newFocus = LED_1;
 
 typedef enum {WAIT_ID, WAIT_PIN, BLOCK, UNLOCK, INTENSITY} state_t;
 
-typedef enum {STAY, INPUT_ID, VALID_PIN, INVALID_PIN} event_t;
+typedef enum {
+	APP_No_Event=0x00,
+	APP_stay=0x01,
+	APP_INPUT_ID=0x02,
+	APP_VALID_PIN=0X03,
+	APP_INVALID_PIN=0X04
+} APP_event_t;
 
 static state_t state;
 static event_t event;
@@ -141,11 +148,16 @@ void App_Init (void)
   // ledInit(LED_BLUE);
   // switchInit(SW3);
 
-  // Inits for DJ_BOARD
-  ledInit();
-  ledOn(LED_1);
-  buttonInit();
-  encoderInit();
+
+    // Inits for DJ_BOARD
+  //ledInit();  moved to logic_module_init()
+  //ledOn(LED_1); moved to logic_module_init()
+  //buttonInit(); moved to logic_module_init()
+  //encoderInit(); moved to logic_module_init()
+
+  if(!logic_module_init())
+	printf("Error al inicializar");
+
 
 
   // irq_id_t id = irqGetId(SW3);

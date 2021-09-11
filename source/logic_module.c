@@ -20,6 +20,10 @@
 /*******************************************************************************
  * ENUMERATIONS AND STRUCTURES AND TYPEDEFS
  ******************************************************************************/
+ typedef struct {
+	 unsigned int valid_IDs[5];
+	 unsigned int valid_PINs[5];
+ } credentials_format;
 
 
 
@@ -30,7 +34,11 @@
 /*******************************************************************************
  * FUNCTION PROTOTYPES FOR PRIVATE FUNCTIONS WITH FILE LEVEL SCOPE
  ******************************************************************************/
-
+ bool check_ID(unsigned int ID);
+ bool check_PIN(unsigned int PIN);
+ void convert_ID();
+ void convert_PIN();
+ void upload_valid_credentials();
 
 /*******************************************************************************
  * ROM CONST VARIABLES WITH FILE LEVEL SCOPE
@@ -45,56 +53,81 @@ static char posc_ID = -1;
 static char posc_ptr = -1;
 static unsigned int ID;
 static unsigned int PIN;
-static unsigned int valid_IDs[5]= {1234567891,1111122222,9988776622,3434567845,5544367812};
-static unsigned int valid_PINs[5]={1234,12345,11111,23452,1122};
+static credentials_format valid_credentials;
+static LM_event_t LM_ev = LM_No_Event;
+
+//static unsigned int valid_IDs[5];
+//static unsigned int valid_PINs[5];
 /*******************************************************************************
  *******************************************************************************
                         GLOBAL FUNCTION DEFINITIONS
  *******************************************************************************
  ******************************************************************************/
 
-void logic_module_init(void){
+bool logic_module_init(void){
+	
+	bool proper_initialization =false;
+	
 
+	upload_valid_credentials();
 
+	//initialize the drivers
+	ledInit(); 
+	ledOn(LED_1);
+	buttonInit();
+	encoderInit();
 }
 
 
-void logic_module(void){
+void run_logic_module(void){
+
+	if(encoder_hasEvent())
+		event=encoder_getEvent();
+	else if(magnetic_reader_hasEvent())
 
 	//fetch event
 	 switch(event){
-	    case ID_CARD:
+
+	    case ID_CARD: //From magnetic card
 	    	if(getPANlen()==8)
 	    		ID_array=(unsigned int)getPAN();
 	    		convert_ID();
 				if(check_ID())
-					int x1;
-				//push VALID_ID event
+					LM_ev=LM_VALID_ID;
 				else
-					int x2;
-				//push INVALID_ID event
+					LM_ev=LM_INVALID_ID;
 			break;
-	    case INPUT_NUMBER:
-	    	//igual al resto, devuelve numero entero
+
+	    case INPUT_NUMBER: //From encoder
+			    ID=getNumber()
+				if(check_ID())
+					LM_ev=LM_VALID_ID;
+				else
+					LM_ev=LM_INVALID_ID;
+			break;
+		
+		case RESTART:
+			//borrar display
+	    	//
 	        break;
 
-	    case RESET:
-	        posc_ID=-1;
 
-	        break;
-	    case UNLOCK:
-	        //show leds
-	        //wait 5 sec
-	        //state = WAIT_ID; //Back to start
-	        break;
-	    case BLOCK:
-	        //block for 5 sec - No lo veo necesario para ahora
-	        break;
-	    case INTENSITY:
+	    default:
 	        //if(intensity set){ state = WAIT_ID}
 	        break;
 
 }
+
+
+bool logic_module_hasEvent(void){
+	return LM_ev;
+}
+
+
+LM_event_t logic_module_getEvent(void){
+	return LM_ev;
+}
+
 
 int get_ID(void){
 
@@ -115,11 +148,11 @@ bool check_ID(unsigned int ID){
 
 	unsigned char posc=0;
 	bool valid_ID=false;
-	size_t n = sizeof(valid_IDs)/sizeof(valid_IDs[0]);
+	size_t n = sizeof(valid_credentials.valid_IDs)/sizeof(valid_credentials.valid_IDs[0]);
 
 	while(posc<n)
 	{
-		if (valid_IDs[posc]==ID)
+		if (valid_credentials.valid_IDs[posc]==ID)
 			valid_ID=true;
 		else
 			posc++;
@@ -129,12 +162,19 @@ bool check_ID(unsigned int ID){
 	return valid_ID;
 }
 
+void upload_valid_credentials(void){
+
+	valid_credentials.valid_IDs={1234567891,1111122222,9988776622,3434567845,5544367812};
+	valid_credentials.valid_PINs={1234,12345,11111,23452,1122};
+
+}
+
 
 bool check_PIN(unsigned int PIN){
 	unsigned char posc=0;
 	bool valid_PIN=false;
 
-	if(valid_PINs[posc_ID]==PIN)
+	if(valid_credentials.valid_PINs[posc_ID]==PIN)
 		valid_PIN=true;
 
 	retutn valid_PIN;
