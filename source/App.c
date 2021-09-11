@@ -207,6 +207,9 @@ void App_Run (void)
 	}
 	else
 	{
+		if(logic_module_hasEvent())
+			event=logic_module_getEvent();
+
 		 switch(state){
 		    case WAIT_ID:
 		        //event = ;//fsm del input id (debe devolver INPUT_ID si se ingreso ID, sino STAY)

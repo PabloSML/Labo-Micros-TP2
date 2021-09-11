@@ -20,6 +20,8 @@
 /*******************************************************************************
  * ENUMERATIONS AND STRUCTURES AND TYPEDEFS
  ******************************************************************************/
+
+
  typedef struct {
 	 unsigned int valid_IDs[5];
 	 unsigned int valid_PINs[5];
