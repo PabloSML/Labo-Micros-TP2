@@ -24,9 +24,9 @@
 #define BITS_PER_CHAR	  	5
 #define TRACK2_BITLEN			MAX_CHAR_LEN * BITS_PER_CHAR
 
-#define SS                (uint8_t)0xB
-#define FS                (uint8_t)0xD
-#define ES                (uint8_t)0xF
+#define SS                (uint8_t)0x0B
+#define FS                (uint8_t)0x0D
+#define ES                (uint8_t)0x1F
 #define CHAR_NOT_FOUND    TRACK2_BITLEN
 //#define LS2MS(data)     (uint8_t)((data[4]<<4) + (data[3]<<3) + (data[2]<<2) + (data[1]<<1) + data[0])
 //#define NUMBITS(data)   (uint8_t)(((data&16)>>4) + (data&8)>>3) + ((data&4)>>2) + ((data&2)>>1) + (data&1))
