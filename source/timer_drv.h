@@ -20,7 +20,8 @@
  * CONSTANT AND MACRO DEFINITIONS USING #DEFINE
  ******************************************************************************/
 
-#define TIMER_TICK_MS       1
+#define TIMER_SCALING       5
+#define TIMER_TICK_MS       0.2
 #define TIMER_MS2TICKS(ms)  ((ms)/TIMER_TICK_MS)
 
 #define TIMERS_MAX_CANT     16

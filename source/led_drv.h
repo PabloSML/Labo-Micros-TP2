@@ -29,7 +29,8 @@
 #define BOARD           DJ_BOARD
 
 // Period for ISR
-#define LED_ISR_PERIOD      5U   // 10 ms
+#define TIMER_SCALING          5U
+#define LED_ISR_PERIOD         5U*TIMER_SCALING   // 5 ms
 
 /*******************************************************************************
  * ENUMERATIONS AND STRUCTURES AND TYPEDEFS

@@ -144,8 +144,8 @@ static ttick_t timerTicks = DISPLAY_ISR_PERIOD;
 static seven_seg_t display[DISP_CANT];
 
 static brightness_label_t actual_bright = MAX;
-static ttick_t bright_timer = actual_bright*DISPLAY_ISR_PERIOD;
-static ttick_t bright_count = bright_timer;
+static ttick_t bright_timer = MAX*DISPLAY_ISR_PERIOD;
+static ttick_t bright_count = MAX*DISPLAY_ISR_PERIOD;
 
 static uint8_t next_disp = NEXT_DISPLAY_REFRESH_TICKS;
 
@@ -196,7 +196,7 @@ bool sevenSegInit(void)
     for(uint8_t i=0; i < DISP_CANT; i++) //initial state of display
     {
       display[i].state = ENABLE;
-      display[i].dp_state = !DP_ACTIVE
+      display[i].dp_state = !DP_ACTIVE;
     }
 
     timerInit();
@@ -269,10 +269,16 @@ void dispOff(seven_seg_label_t disp)
   display[disp].state = DISABLE;
 }
 
+void dispToggle(seven_seg_label_t disp)
+{
+  if(display[disp].state < BLINK)
+    display[disp].state = (seven_seg_state_t)(!(display[disp].state));
+}
+
 void dispBlink(seven_seg_label_t disp, uint32_t period)
 {
   display[disp].state = BLINK;
-  display[disp].disp_timer = period/(NEXT_DISPLAY_REFRESH_TICKS*DISPLAY_ISR_PERIOD*DISP_CANT);
+  display[disp].disp_timer = (period*TIMER_SCALING)/(NEXT_DISPLAY_REFRESH_TICKS*DISPLAY_ISR_PERIOD*DISP_CANT);
   display[disp].count = display[disp].disp_timer;
 }
 
@@ -330,10 +336,10 @@ static void display_refresh_isr(void)
   {
     switch(display[actual7SegDisp].state)
     {
-      case OFF:
+      case DISABLE:
           sevenSegWrite(SEGMENTS_OFF,!DP_ACTIVE,actual7SegDisp);
           break;
-      case ON:
+      case ENABLE:
           sevenSegWrite(msg[actual7SegDisp + offset], display[actual7SegDisp].dp_state, actual7SegDisp);  //write character
           break;
       case BLINK:
@@ -346,10 +352,14 @@ static void display_refresh_isr(void)
           bool dp = (display[actual7SegDisp].isOn)? (display[actual7SegDisp].dp_state) : (!DP_ACTIVE);
           sevenSegWrite(ch, dp, actual7SegDisp);
           break;
+      default:
+        break;
     }
     cycle_focus();
     next_disp = NEXT_DISPLAY_REFRESH_TICKS;
-  }else
+    bright_count = bright_timer;
+  }
+  else
   {
     if(!(--bright_count))
     {

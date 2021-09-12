@@ -22,9 +22,9 @@
 #define BOARD           FRDM
 
 #if (BOARD == FRDM)
-#if TIMER_TICK_MS != (1000U/SYSTICK_ISR_FREQUENCY_HZ)
-#error Las frecuencias no coinciden!!
-#endif // TIMER_TICK_MS != (1000U/SYSTICK_ISR_FREQUENCY_HZ)
+// #if TIMER_TICK_MS != (1000U/SYSTICK_ISR_FREQUENCY_HZ)
+// #error Las frecuencias no coinciden!!
+// #endif // TIMER_TICK_MS != (1000U/SYSTICK_ISR_FREQUENCY_HZ)
 #endif
 
 #define TIMER_DEVELOPMENT_MODE    1
@@ -120,7 +120,7 @@ void timerStart(tim_id_t id, ttick_t ticks, uint8_t mode, tim_callback_t callbac
     {
         timers[id].running = false; // disable timer
         timers[id].period = ticks;  // configure timer
-        timers[id].cnt = ticks-1;
+        timers[id].cnt = ticks;
         timers[id].callback = callback;
         timers[id].mode = mode;
         timers[id].expired = false;
@@ -180,7 +180,7 @@ static void timer_isr(void)
 
 static void timerResetCnt(tim_id_t id)
 {
-    timers[id].cnt = timers[id].period-1;
+    timers[id].cnt = timers[id].period;
 }
 
 static void update(tim_id_t id)

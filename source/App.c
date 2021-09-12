@@ -130,6 +130,7 @@ void App_Init (void)
 
   // Inits for DJ_BOARD
   ledInit();
+  // ledOn(LED_1);
   buttonInit();
   encoderInit();
   sevenSegInit();
@@ -147,7 +148,7 @@ void App_Init (void)
 void App_Run (void)
 {
 
-  const char* msg = "Hola Fran que tal";
+  const char* msg = "Buenardo Pancho";
   uint8_t msg_len = strlen(msg);
   dispMSG(msg, msg_len);
 
@@ -181,53 +182,76 @@ void App_Run (void)
   }
 
 
-  // if(button_hasEvent())
-  // {
-  //   newButtonEv = button_getEvent();
+  if(button_hasEvent())
+  {
+    newButtonEv = button_getEvent();
 
-  //   switch (newButtonEv)
-  //   {
-  //   case BUTTON_ePress:
-  //     /* Act on release... */
-  //     break;
+    switch (newButtonEv)
+    {
+    case BUTTON_ePress:
+      /* Act on release... */
+      break;
     
-  //   case BUTTON_eRelease:
-  //     if(prevButtonEv == BUTTON_ePress)
-  //     {
-  //       ledOn_timeout(LED_1, 3000U);
-  //       // led_on = !led_on;
-  //     }
-  //     else if (prevButtonEv == BUTTON_eLKP)
-  //     {
-  //       // if(led_on)
-  //       //   cycle_led_color();
-  //       ledBlink(LED_1, 500U);
-  //       ledBlink(LED_2, 1000U);
-  //       ledBlink(LED_3, 100U);
-  //     }
-  //     break;
+    case BUTTON_eRelease:
+      if(prevButtonEv == BUTTON_ePress)
+      {
+        dispToggle(DISP_1);
+        dispToggle(DISP_2);
+        dispToggle(DISP_3);
+        dispToggle(DISP_4);
+        // ledOn_timeout(LED_1, 3000U);
+        // led_on = !led_on;
+      }
+      else if (prevButtonEv == BUTTON_eLKP)
+      {
+        dispBlink(DISP_1, 200U);
+        dispBlink(DISP_2, 969U);
+        dispBlink(DISP_3, 755U);
+        dispBlink(DISP_4, 420U);
+        // static bool test_flag = false;
+        // if(test_flag)
+        // {
+        //   setBright(MAX);
+        //   test_flag = false;
+        // }
+        // else
+        // {
+        //   setBright(MID);
+        //   test_flag = true;
+        // }
+        // if(led_on)
+        //   cycle_led_color();
+        // ledBlink(LED_1, 500U);
+        // ledBlink(LED_2, 1000U);
+        // ledBlink(LED_3, 100U);
+      }
+      break;
 
-  //   case BUTTON_eLKP:
-  //     /* Act on release... */
-  //     break;
+    case BUTTON_eLKP:
+      /* Act on release... */
+      break;
 
-  //   case BUTTON_eTypeMatic:
-  //     {
-  //       // if(led_on)
-  //       //   cycle_led_color();
-  //       ledOff(LED_1);
-  //       ledOff(LED_2);
-  //       ledOff(LED_3);
-  //     }
-  //     break;
+    case BUTTON_eTypeMatic:
+      {
+        dispOff(DISP_1);
+        dispOff(DISP_2);
+        dispOff(DISP_3);
+        dispOff(DISP_4);
+        // if(led_on)
+        //   cycle_led_color();
+        // ledOff(LED_1);
+        // ledOff(LED_2);
+        // ledOff(LED_3);
+      }
+      break;
     
-  //   default:
-  //     break;
-  //   }
+    default:
+      break;
+    }
     
-  //   prevButtonEv = newButtonEv;
+    prevButtonEv = newButtonEv;
 
-  // }
+  }
   
 }
 

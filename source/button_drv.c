@@ -37,11 +37,11 @@
 
 
 // Period for ISR
-#define BUTTON_ISR_PERIOD      10U   // 10 ms    - Software Debouncing
+#define BUTTON_ISR_PERIOD      (10U*TIMER_SCALING)   // 10 ms    - Software Debouncing
 
-#define LKP_THRESHOLD   ((300U)/(BUTTON_ISR_PERIOD))   // 500 ms   - Begin LKP state
-#define TM_THRESHOLD    ((3000U)/(BUTTON_ISR_PERIOD))  // 3000 ms  - Begin TypeMatic state
-#define TM_REPEAT       ((1000U)/(BUTTON_ISR_PERIOD))  // 1000 ms  - Repeat TypeMatic state
+#define LKP_THRESHOLD   ((300U*TIMER_SCALING)/(BUTTON_ISR_PERIOD))   // 300 ms   - Begin LKP state
+#define TM_THRESHOLD    ((3000U*TIMER_SCALING)/(BUTTON_ISR_PERIOD))  // 3000 ms  - Begin TypeMatic state
+#define TM_REPEAT       ((1000U*TIMER_SCALING)/(BUTTON_ISR_PERIOD))  // 1000 ms  - Repeat TypeMatic state
 
 
 /*******************************************************************************

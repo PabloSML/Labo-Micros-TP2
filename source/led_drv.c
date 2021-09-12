@@ -144,7 +144,7 @@ void ledToggle(led_label_t led)
 void ledBlink(led_label_t led, uint32_t period)
 {
   leds[led].state = BLINK;
-  leds[led].led_timer = period/(LED_ISR_PERIOD*LED_CANT);
+  leds[led].led_timer = (period*TIMER_SCALING)/(LED_ISR_PERIOD*LED_CANT);
   leds[led].count = leds[led].led_timer;
 }
 

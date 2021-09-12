@@ -32,7 +32,7 @@
 #endif
 
 // Period for ISR
-#define ENCODER_ISR_PERIOD  5U                  // 5 ms - Software Debouncing
+#define ENCODER_ISR_PERIOD     5U*TIMER_SCALING                  // 5 ms - Software Debouncing
 
 /*******************************************************************************
  * ENUMERATIONS AND STRUCTURES AND TYPEDEFS

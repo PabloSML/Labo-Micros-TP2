@@ -20,8 +20,9 @@
  ******************************************************************************/
 
 // Period for ISR
-#define DISPLAY_ISR_PERIOD      1U
-#define NEXT_DISPLAY_REFRESH_TICKS    5
+
+#define DISPLAY_ISR_PERIOD            1U  // 0.2 ms
+#define NEXT_DISPLAY_REFRESH_TICKS    6U
 
 
 /*******************************************************************************
@@ -39,11 +40,10 @@ typedef enum
 
 typedef enum
 {
-  LOW    = 2;
-  MID    = 3;
-  HIGH   = 4;
-  MAX    = 5;
-}brightness_label_t;
+  MIN    = 2,
+  MID    = 4,
+  MAX    = 6
+} brightness_label_t;
 
 /*******************************************************************************
  * VARIABLE PROTOTYPES WITH GLOBAL SCOPE
@@ -109,6 +109,11 @@ void dispOff(seven_seg_label_t disp);
  */
 void dispBlink(seven_seg_label_t disp, uint32_t period);
 
+/**
+ * @brief Toggle chosen 7Segment display
+ * @param disp Chosen 7Segment display
+ */
+void dispToggle(seven_seg_label_t disp);
 
 /**
  * @brief set bright for 7Segment display
