@@ -53,6 +53,8 @@ static int8_t id_number[ID_SIZE] = CLEAN_ID;
 static int8_t pin_number[PIN_MAXSIZE] = CLEAN_PIN;
 static int8_t intensity[INTENSITY_SIZE] = DEFAULT_INT;
 
+static int64_t fullnumber;
+
 //Si estoy modificando el numero o moviendome de posicion
 static DecoderState_t state;
 static DecoderEvent_t ev = DECODER_noev;
@@ -175,7 +177,6 @@ void decoder(DecoderType_t dtype){
 
 }
 
-
 //ingresas en que estado estas (Intensity, pin o id) y devuelve evento (noev, inputnum o restart)
 
 bool decoder_hasEvent(void){  
@@ -235,23 +236,63 @@ DecoderEvent_t decoder_getEvent(void){
     return ev;
 }
 
-uint64_t decoder_getNumber(void){
+//Call when decoder_getEvent returns inputnumber
+//Get de value of number if valid, else get -1
+int64_t decoder_getNumber(void){
+    if(decoder_validateNumber()){  
+        return fullnumber;
+    }
+    else{
+        return -1;
+    }
     
 }
 
+//Validate if number was fully inserted and within the admitted range. Guarda en fullnumber si fue valido.
+//Probado que funciona
 bool decoder_validateNumber(void){
     uint8_t size = 0;
+    int8_t *numberpos;
+    uint8_t maxvalue;
+    uint8_t minvalue;
+    bool valid = true;
     switch(type){
         case DECODER_intesity:
             size = INTENSITY_SIZE;
+            numberpos = intensity;
+            maxvalue = INTENSITY_MAXVALUE;
+            minvalue = INTENSITY_MINVALUE;
             break;
         case DECODER_id:
             size = ID_SIZE;
+            numberpos = id_number;
+            maxvalue = ID_MAXDIGITNUMBER;
+            minvalue = ID_MINDIGITNUMBER;
             break;
         case DECODER_pin:
             size = PIN_MAXSIZE;
+            numberpos = pin_number;
+            maxvalue = PIN_MAXDIGITNUMBER;
+            minvalue = PIN_MINDIGITNUMBER;
             break;
     }
+    for(uint8_t i = 0; (i < size) & valid; i++){
+        if(!((type == DECODER_pin)&(i == size-1)&(numberpos[i] == GUION))){
+            if(!((numberpos[i] <= maxvalue) & (numberpos[i] >= minvalue))){ //If number not in valid range
+                valid = false;
+                fullnumber = -1;
+            }
+            else{
+                if(i == 0){
+                    fullnumber = numberpos[i];
+                }
+                else{
+                    fullnumber = fullnumber*10+ numberpos[i];
+                }
+            }
+        }
+    }
+    return valid;
 }
 
 

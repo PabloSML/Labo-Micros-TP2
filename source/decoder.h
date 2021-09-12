@@ -64,7 +64,7 @@ void decoder(DecoderType_t dtype);
 
 bool decoder_hasEvent(void);
 DecoderEvent_t decoder_getEvent(void);
-uint64_t decoder_getNumber(void);
+int64_t decoder_getNumber(void);
 
 
 
