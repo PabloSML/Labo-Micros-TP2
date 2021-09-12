@@ -50,8 +50,8 @@
 /*******************************************************************************
  * STATIC VARIABLES AND CONST VARIABLES WITH FILE LEVEL SCOPE
  ******************************************************************************/
-//static unsigned char ID_array[8] ={-1};
-//static unsigned char PIN_array[5] = {-1};
+static uint8_t ID_array[8] ={-1};
+static unsigned int PIN_array[5] = {-1};
 static char posc_ID = -1;
 static char posc_ptr = -1;
 static unsigned int ID=0x00;
@@ -72,7 +72,6 @@ bool logic_module_init(void){
 	
 	bool proper_initialization =false;
 	
-
 	upload_valid_credentials();
 
 	//initialize the drivers
@@ -108,7 +107,7 @@ void run_logic_module(void){
 				}
 				else
 				{
-					ID=decoder_getNumber();
+					ID = decoder_getNumber();
 					if(check_ID())
 					{
 						LM_ev=LM_VALID_ID;
@@ -122,6 +121,8 @@ void run_logic_module(void){
 		
 		case DECODER_restart:
 			waiting_for_PIN=false;
+			ID = 0;
+			PIN = 0;
 			LM_ev=LM_RESET;
 			decoder(DECODER_id);
 			//borrar display
@@ -142,8 +143,12 @@ void run_logic_module(void){
 		switch(event){
 
 			case MAGREADER_cardUpload: //From magnetic card
-	    		if(getPANlen()==8)
-	    			ID_array=(unsigned int)getPAN();
+	    		if(getPANlen()==8){
+					uint8_t * p = getPAN();
+					for(uint8_t i = 0; i < 8; i++){
+						ID_array[i] = p[i];
+					}
+	    			//ID_array = (uint8_t *)getPAN();
 	    			convert_ID();
 					if(check_ID())
 					{
@@ -152,6 +157,9 @@ void run_logic_module(void){
 					}
 					else
 						LM_ev=LM_INVALID_ID;
+				}
+				else
+					LM_ev=LM_INVALID_ID;
 				break;
 
 			case MAGREADER_carderror: 
@@ -162,8 +170,6 @@ void run_logic_module(void){
 
 				break;
 		
-
-
 			default:
 				//if(intensity set){ state = WAIT_ID}
 				break;
@@ -217,10 +223,12 @@ bool check_ID(){
 }
 
 void upload_valid_credentials(void){
-
-	valid_credentials.valid_IDs={1234567891,1111122222,9988776622,3434567845,5544367812};
-	valid_credentials.valid_PINs={1234,12345,11111,23452,1122};
-
+	uint8_t validIDs[5] = {1234567891,1111122222,9988776622,3434567845,5544367812};
+	uint8_t validPINs[5] = {1234,12345,11111,23452,1122};
+	for(uint8_t i = 0; i < 5; i++){
+		valid_credentials.valid_IDs[i] = validIDs[i];
+		valid_credentials.valid_PINs[i] = validPINs[i];
+	}
 }
 
 
@@ -241,7 +249,7 @@ void convert_ID(){
 	for (i = 0; i < n; i++)
 	    k = 10 * k + ID_array[i] + 1;
 
-		K=ID;
+	k=ID;
 }
 
 
