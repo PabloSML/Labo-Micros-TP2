@@ -20,7 +20,8 @@
  ******************************************************************************/
 
 // Period for ISR
-#define DISPLAY_ISR_PERIOD      2U   
+#define DISPLAY_ISR_PERIOD      1U
+#define NEXT_DISPLAY_REFRESH_TICKS    5
 
 
 /*******************************************************************************
@@ -34,8 +35,15 @@ typedef enum
   DISP_3    = 0x02,
   DISP_4    = 0x03,
   DISP_CANT
-} seven_seg_t;
+} seven_seg_label_t;
 
+typedef enum
+{
+  LOW    = 2;
+  MID    = 3;
+  HIGH   = 4;
+  MAX    = 5;
+}brightness_label_t;
 
 /*******************************************************************************
  * VARIABLE PROTOTYPES WITH GLOBAL SCOPE
@@ -53,26 +61,6 @@ bool sevenSegInit(void);
 
 // Non-Blocking services
 
-
-/**
- * @brief print message on display. Maximo size de msg MAX_LENGTH_MESSAGE
- * @param char pointer to string
- * @param uint8_t size of msg
- */
-void dispMSG(const char * new_msg, uint8_t size_msg);
-
-/**
- * @brief set/clr decimal point
- * @param seven_seg_t id of display position
- * @param bool state of DP, true:ON, false:OFF
- */
-void dispDP(seven_seg_t disp, bool state);
-
-/**
- * @brief clear display
- */
-void dispCLR(void);
-
 /**
  * @brief move msg to right 
  */
@@ -82,6 +70,51 @@ void scrollRightMsg(void);
  * @brief move msg to left 
  */
 void scrollLeftMsg(void);
+
+/**
+ * @brief print message on display. Maximo size de msg MAX_LENGTH_MESSAGE
+ * @param new_msg char pointer to string
+ * @param size_msg size of string
+ */
+void dispMSG(const char * new_msg, uint8_t size_msg);
+
+/**
+ * @brief set/clr decimal point
+ * @param disp Chosen 7Segment display
+ * @param state of DP, true:ON, false:OFF
+ */
+void dispDP(seven_seg_label_t disp, bool state);
+
+/**
+ * @brief clear display
+ */
+void dispCLR(void);
+
+/**
+ * @brief Turn On chosen 7Segment display
+ * @param disp Chosen 7Segment display
+ */
+void dispOn(seven_seg_label_t disp);
+
+/**
+ * @brief Turn Off chosen 7Segment display
+ * @param disp Chosen 7Segment display
+ */
+void dispOff(seven_seg_label_t disp);
+
+/**
+ * @brief Blink chosen 7Segment display
+ * @param disp Chosen 7Segment display
+ * @param period Blinking period (ms - Multiple of DISPLAY_ISR_PERIOD*DISP_CANT)
+ */
+void dispBlink(seven_seg_label_t disp, uint32_t period);
+
+
+/**
+ * @brief set bright for 7Segment display
+ * @param level Chosen bright 7Segment display
+ */
+void setBright(brightness_label_t level);
 
 
 /*******************************************************************************

@@ -18,7 +18,7 @@
 
 #define SEVEN_SEG_DEVELOPMENT_MODE 1
 
-#define PIN_CSEGA         PORTNUM2PIN(PC,5)  // D.O - AH
+#define PIN_CSEGA         PORTNUM2PIN(PC,5)   // D.O - AH
 #define PIN_CSEGB         PORTNUM2PIN(PC,7)   // D.O - AH
 #define PIN_CSEGC         PORTNUM2PIN(PC,0)   // D.O - AH
 #define PIN_CSEGD         PORTNUM2PIN(PC,9)   // D.O - AH
@@ -32,7 +32,8 @@
 
 #define NUMBER_OF_SEGMENTS 6
 
-#define SEGMENT_ACTIVE   HIGH 
+#define SEGMENT_ACTIVE   HIGH
+#define SEGMENTS_OFF  0x00
 
 #define DP_ACTIVE  HIGH
 
@@ -41,6 +42,26 @@
 /*******************************************************************************
  * ENUMERATIONS AND STRUCTURES AND TYPEDEFS
  ******************************************************************************/
+
+typedef enum
+{
+  DISABLE               = 0x00,   // Continually OFF
+  ENABLE                = 0x01,   // Continually ON
+  BLINK                 = 0x02,   // Blinking
+  TIMEOUT               = 0x03    // On with timer
+} seven_seg_state_t;
+
+typedef struct
+{
+  seven_seg_state_t   state;
+  bool                dp_state;
+  ttick_t             disp_timer;
+  ttick_t             count;
+  bool                isOn;         // Flag for blinking only         
+
+} seven_seg_t;
+
+
 
 /*******************************************************************************
  * VARIABLES WITH GLOBAL SCOPE
@@ -65,7 +86,7 @@ static void putCharacter(uint8_t ch, bool dp);
  * @brief set SEL0,SEL1
  * @param receive id 7Seg
  */
-static void selSSeg(seven_seg_t id);
+static void selSSeg(seven_seg_label_t id);
 
 /**
  * @brief write character on 7 segment display
@@ -73,7 +94,7 @@ static void selSSeg(seven_seg_t id);
  * @param bool dpState true:on false:off
  * @param segment id
  */
-static void sevenSegWrite(uint8_t character,bool dpState, seven_seg_t id);
+static void sevenSegWrite(uint8_t character,bool dpState, seven_seg_label_t id);
 
 /**
  * @brief Periodic service to refresh display
@@ -120,15 +141,23 @@ static const uint8_t gfedcbaPins[]= {PIN_CSEGA,PIN_CSEGB,PIN_CSEGC,PIN_CSEGD,PIN
 //Refresh display variables..
 static tim_id_t timerId;
 static ttick_t timerTicks = DISPLAY_ISR_PERIOD;
+static seven_seg_t display[DISP_CANT];
+
+static brightness_label_t actual_bright = MAX;
+static ttick_t bright_timer = actual_bright*DISPLAY_ISR_PERIOD;
+static ttick_t bright_count = bright_timer;
+
+static uint8_t next_disp = NEXT_DISPLAY_REFRESH_TICKS;
+
+
 
 //Message variable
 static uint8_t msg[MAX_LENGTH_MESSAGE];
 static uint8_t actual_size_msg;
-static bool dp_state[4];
 static uint8_t offset;
 
 // Currently focused display unit
-static seven_seg_t actual7SegDisp = DISP_1;
+static seven_seg_label_t actual7SegDisp = DISP_1;
 
 /*******************************************************************************
  *******************************************************************************
@@ -163,6 +192,12 @@ bool sevenSegInit(void)
     gpioMode(PIN_CSEGDP, OUTPUT);
     gpioMode(PIN_SEL0, OUTPUT);   //set gpio connected to select as output
     gpioMode(PIN_SEL1, OUTPUT);
+
+    for(uint8_t i=0; i < DISP_CANT; i++) //initial state of display
+    {
+      display[i].state = ENABLE;
+      display[i].dp_state = !DP_ACTIVE
+    }
 
     timerInit();
     timerId = timerGetId();  //Agregar sub-timer scrolling y sub-timer brillo..
@@ -209,9 +244,9 @@ void dispMSG(const char * new_msg, uint8_t size_msg)
   }
 }
 
-void dispDP(seven_seg_t disp, bool state)
+void dispDP(seven_seg_label_t disp, bool state)
 {
-  dp_state[disp] = state;
+  display[disp].dp_state = state;
 }
 
 
@@ -219,10 +254,35 @@ void dispCLR(void)
 {
   for(uint8_t i = 0; i < MAX_LENGTH_MESSAGE; i++)
   {
-    msg[i] = 0x00;
+    msg[i] = SEGMENTS_OFF;
   }
 }
 
+
+void dispOn(seven_seg_label_t disp)
+{
+  display[disp].state = ENABLE;
+}
+
+void dispOff(seven_seg_label_t disp)
+{
+  display[disp].state = DISABLE;
+}
+
+void dispBlink(seven_seg_label_t disp, uint32_t period)
+{
+  display[disp].state = BLINK;
+  display[disp].disp_timer = period/(NEXT_DISPLAY_REFRESH_TICKS*DISPLAY_ISR_PERIOD*DISP_CANT);
+  display[disp].count = display[disp].disp_timer;
+}
+
+void setBright(brightness_label_t level)
+{
+  actual_bright = level;
+  bright_timer = actual_bright*DISPLAY_ISR_PERIOD;
+  bright_count = bright_timer;
+
+}
 
 
 /*******************************************************************************
@@ -248,7 +308,7 @@ static void putCharacter(uint8_t ch, bool dp)
 }
 
 
-static void selSSeg(seven_seg_t id)
+static void selSSeg(seven_seg_label_t id)
 {
 
   gpioWrite(PIN_SEL0, (uint8_t)id&(uint8_t)1); 
@@ -256,25 +316,54 @@ static void selSSeg(seven_seg_t id)
 
 }
 
-static void sevenSegWrite(uint8_t character, bool dpState, seven_seg_t id)
+static void sevenSegWrite(uint8_t character, bool dpState, seven_seg_label_t id)
 {
   selSSeg(id);        //update select 7SEG to change
   putCharacter(character, dpState); //update actual character
 }
 
 
-static void display_refresh_isr(void) //Por ahora solo maneja 4 caracteres y no scrollea..
+static void display_refresh_isr(void)
 {
 
-  sevenSegWrite(msg[actual7SegDisp + offset], dp_state[actual7SegDisp], actual7SegDisp);  //write character
-  
-  cycle_focus();
+  if(!(--next_disp))
+  {
+    switch(display[actual7SegDisp].state)
+    {
+      case OFF:
+          sevenSegWrite(SEGMENTS_OFF,!DP_ACTIVE,actual7SegDisp);
+          break;
+      case ON:
+          sevenSegWrite(msg[actual7SegDisp + offset], display[actual7SegDisp].dp_state, actual7SegDisp);  //write character
+          break;
+      case BLINK:
+          if(!(--(display[actual7SegDisp].count)))   // Decremento el contador de ticks, termino?
+          {
+            display[actual7SegDisp].isOn = !(display[actual7SegDisp].isOn); // Toggle blink state
+            display[actual7SegDisp].count = display[actual7SegDisp].disp_timer;         // Reset blink timer
+          }
+          uint8_t ch = (display[actual7SegDisp].isOn)? (msg[actual7SegDisp + offset]) : (SEGMENTS_OFF);
+          bool dp = (display[actual7SegDisp].isOn)? (display[actual7SegDisp].dp_state) : (!DP_ACTIVE);
+          sevenSegWrite(ch, dp, actual7SegDisp);
+          break;
+    }
+    cycle_focus();
+    next_disp = NEXT_DISPLAY_REFRESH_TICKS;
+  }else
+  {
+    if(!(--bright_count))
+    {
+      sevenSegWrite(SEGMENTS_OFF,!DP_ACTIVE,actual7SegDisp);
+      bright_count = bright_timer;
+    }
+  }
+
 }
 
 
 static void cycle_focus(void)
 {
-  actual7SegDisp = (seven_seg_t)((actual7SegDisp + 1) % DISP_CANT);
+  actual7SegDisp = (seven_seg_label_t)((actual7SegDisp + 1) % DISP_CANT);
 }
 
 
