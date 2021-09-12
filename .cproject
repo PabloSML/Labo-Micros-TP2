@@ -235,7 +235,7 @@
 					</folderInfo>
 					<sourceEntries>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="SDK"/>
-						<entry excluding="logic_module.c|mainapp.c|decoder.c" flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="source"/>
+						<entry excluding="decoder.c|logic_module.c|mainapp.c" flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="source"/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
