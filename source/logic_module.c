@@ -9,6 +9,7 @@
  ******************************************************************************/
 
 #include "logic_module.h"
+#include "decoder.h"
 //#include "gpio_pdrv.h"
 //#include "timer_drv.h"
 
@@ -96,7 +97,7 @@ void run_logic_module(void){
 	    case DECODER_inputnum: //From encoder
 			    if(waiting_for_PIN)
 				{
-					PIN = getNumber();
+					PIN = decoder_getNumber();
 					if(check_PIN())
 					{
 						LM_ev=LM_VALID_PIN;
@@ -107,7 +108,7 @@ void run_logic_module(void){
 				}
 				else
 				{
-					ID=getNumber();
+					ID=decoder_getNumber();
 					if(check_ID())
 					{
 						LM_ev=LM_VALID_ID;
@@ -131,6 +132,7 @@ void run_logic_module(void){
 	    default:
 	        //if(intensity set){ state = WAIT_ID}
 	        break;
+		}
 	}	
 
 	else if(magreader_hasEvent()&& (!waiting_for_PIN))
@@ -167,6 +169,7 @@ void run_logic_module(void){
 				break;
 
 		}
+	}
 }
 
 
