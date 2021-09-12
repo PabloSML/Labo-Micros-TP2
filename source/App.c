@@ -15,6 +15,7 @@
 #include "gpio_pdrv.h"
 #include "hardware.h"
 #include "MK64F12.h"
+#include "logic_module.h"
 
 /*******************************************************************************
  * CONSTANT AND MACRO DEFINITIONS USING #DEFINE
