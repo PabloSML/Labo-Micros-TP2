@@ -15,10 +15,10 @@
 /*******************************************************************************
  * CONSTANT AND MACRO DEFINITIONS USING #DEFINE
  ******************************************************************************/
-#define GUION       -1
+#define GUION       '='
 #define CLEAN_ID    {GUION,GUION,GUION,GUION,GUION,GUION,GUION,GUION}
 #define CLEAN_PIN   {GUION,GUION,GUION,GUION,GUION}
-#define DEFAULT_INT 9
+#define DEFAULT_INT {INTENSITY_MAXVALUE}
 
 /*******************************************************************************
  * ENUMERATIONS AND STRUCTURES AND TYPEDEFS
@@ -46,15 +46,16 @@ typedef enum {
  ******************************************************************************/
 
 //apunta a la posicion del numero que se quiere modificar
-static unsigned int cursor;
+static uint8_t cursor;
 
 //Valores iniciales de los numeros -------
-static int id_number[ID_SIZE] = CLEAN_ID;
-static int pin_number[PIN_MAXSIZE] = CLEAN_PIN;
-static int intensity[INTENSITY_SIZE] = DEFAULT_INT;
+static int8_t id_number[ID_SIZE] = CLEAN_ID;
+static int8_t pin_number[PIN_MAXSIZE] = CLEAN_PIN;
+static int8_t intensity[INTENSITY_SIZE] = DEFAULT_INT;
 
 //Si estoy modificando el numero o moviendome de posicion
 static DecoderState_t state;
+static DecoderEvent_t ev = DECODER_noev;
 
 static ButtonEvent_t prevButtonEv = BUTTON_noev;
 static ButtonEvent_t newButtonEv = BUTTON_noev;
@@ -67,11 +68,11 @@ static DecoderType_t type = -1;
  *******************************************************************************
  ******************************************************************************/
 void start_decoder(void){
-    for(int i = 0; i < ID_SIZE; i++)
+    for(int8_t i = 0; i < ID_SIZE; i++)
     {
         id_number[i] = GUION;
     }
-    for(int i = 0; i < PIN_MAXSIZE; i++)
+    for(int8_t i = 0; i < PIN_MAXSIZE; i++)
     {
         pin_number[i] = GUION;
     }
@@ -83,19 +84,23 @@ void start_decoder(void){
 
 void change_number(EncoderEvent_t move){
 
-    int size;
-    int *numberpos;
+    uint8_t maxvalue;
+    uint8_t minvalue;
+    int8_t *numberpos;
     switch(type){
         case DECODER_intesity:
-            size = INTENSITY_SIZE;
+            maxvalue = INTENSITY_MAXVALUE;
+            minvalue = INTENSITY_MINVALUE;
             numberpos = intensity;
             break;
         case DECODER_id:
-            size = ID_SIZE;
+            maxvalue = ID_MAXDIGITNUMBER;
+            minvalue = ID_MINDIGITNUMBER;
             numberpos = id_number;
             break;
         case DECODER_pin:
-            size = PIN_MAXSIZE;
+            maxvalue = PIN_MAXDIGITNUMBER;
+            minvalue = PIN_MINDIGITNUMBER;
             numberpos = pin_number;
             break;
         default:
@@ -104,13 +109,13 @@ void change_number(EncoderEvent_t move){
     switch(move){
         case ENCODER_eLeftTurn:
             if(numberpos[cursor] == GUION ){    //Para cuando esta vacio (-) -> (9)
-                numberpos[cursor] = 9;
+                numberpos[cursor] = maxvalue;
             }
-            else if((type == DECODER_pin) & (numberpos[cursor] == 0) & (cursor == PIN_MAXSIZE)){ //Solo para el ultimo valor del PIN que es opcional (0) -> (-)
+            else if((type == DECODER_pin) & (numberpos[cursor] == PIN_MINDIGITNUMBER) & (cursor == PIN_MAXSIZE)){ //Solo para el ultimo valor del PIN que es opcional (0) -> (-)
                 numberpos[cursor] = GUION;
             }
-            else if(numberpos[cursor] == 0 ){   //(0) -> (9)
-                numberpos[cursor] = 9;
+            else if(numberpos[cursor] == minvalue ){   //(0) -> (9)
+                numberpos[cursor] = maxvalue;
             }
             else{
                 numberpos[cursor]--;
@@ -118,13 +123,13 @@ void change_number(EncoderEvent_t move){
             break;
         case ENCODER_eRightTurn:
             if(numberpos[cursor] == GUION ){    // (-) -> (0)
-                numberpos[cursor] = 0;
+                numberpos[cursor] = minvalue;
             }
-            else if((type == DECODER_pin) & (numberpos[cursor] == 9) & (cursor == PIN_MAXSIZE)){ //Solo para el ultimo valor del PIN que es opcional (9) -> (-)
+            else if((type == DECODER_pin) & (numberpos[cursor] == PIN_MAXDIGITNUMBER) & (cursor == PIN_MAXSIZE)){ //Solo para el ultimo valor del PIN que es opcional (9) -> (-)
                 numberpos[cursor] = GUION;
             }
-            else if(numberpos[cursor] == 9 ){   // (9) -> (0)
-                numberpos[cursor] = 0;
+            else if(numberpos[cursor] == maxvalue ){   // (9) -> (0)
+                numberpos[cursor] = minvalue;
             }
             else{
                 numberpos[cursor]++;
@@ -136,7 +141,7 @@ void change_number(EncoderEvent_t move){
 }
 
 void move_cursor(EncoderEvent_t move){
-    int size;
+    int8_t size;
     switch(type){
         case DECODER_intesity:
             size = INTENSITY_SIZE;
@@ -165,12 +170,15 @@ void move_cursor(EncoderEvent_t move){
     }
 }
 
+//start decoder
+void decoder(DecoderType_t dtype){
+
+}
+
 
 //ingresas en que estado estas (Intensity, pin o id) y devuelve evento (noev, inputnum o restart)
 
-DecoderEvent_t decoder(DecoderType_t dtype){  
-    type = dtype;
-    DecoderEvent_t ev = DECODER_noev;
+bool decoder_hasEvent(void){  
     if(button_hasEvent()){
         newButtonEv = button_getEvent();
         switch (newButtonEv){
@@ -215,10 +223,36 @@ DecoderEvent_t decoder(DecoderType_t dtype){
             change_number(encoder_getEvent());
         }
     }
+    if(ev == DECODER_noev){
+        return false;
+    }
+    else{
+        return true;
+    }
+}
+
+DecoderEvent_t decoder_getEvent(void){
     return ev;
 }
 
+uint64_t decoder_getNumber(void){
+    
+}
 
+bool decoder_validateNumber(void){
+    uint8_t size = 0;
+    switch(type){
+        case DECODER_intesity:
+            size = INTENSITY_SIZE;
+            break;
+        case DECODER_id:
+            size = ID_SIZE;
+            break;
+        case DECODER_pin:
+            size = PIN_MAXSIZE;
+            break;
+    }
+}
 
 
 
