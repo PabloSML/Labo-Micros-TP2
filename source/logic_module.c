@@ -38,11 +38,10 @@
 /*******************************************************************************
  * FUNCTION PROTOTYPES FOR PRIVATE FUNCTIONS WITH FILE LEVEL SCOPE
  ******************************************************************************/
- bool check_ID();
- bool check_PIN();
- void convert_ID();
- void convert_PIN();
- void upload_valid_credentials();
+ static bool check_ID();
+ static bool check_PIN();
+ static void convert_ID();
+ static void upload_valid_credentials();
 
 /*******************************************************************************
  * ROM CONST VARIABLES WITH FILE LEVEL SCOPE
@@ -260,7 +259,7 @@ int get_PIN(void){
                         LOCAL FUNCTION DEFINITIONS
  *******************************************************************************
  ******************************************************************************/
-bool check_ID(){
+static bool check_ID(){
 
 	uint8_t posc = 0;
 	bool valid_ID=false;
@@ -278,7 +277,7 @@ bool check_ID(){
 	return valid_ID;
 }
 
-void upload_valid_credentials(void){
+static void upload_valid_credentials(void){
 	uint64_t validIDs[5] = {1234567891UL,1111122222UL,9988776622UL,3434567845UL,5544367812UL};
 	uint64_t validPINs[5] = {1234UL,12345UL,11111UL,23452UL,1122UL};
 	for(uint8_t i = 0; i < 5; i++){
@@ -288,7 +287,7 @@ void upload_valid_credentials(void){
 }
 
 
-bool check_PIN(void)
+static bool check_PIN(void)
 {
 	uint8_t posc = 0;
 	bool valid_PIN = false;
@@ -299,7 +298,7 @@ bool check_PIN(void)
 	return valid_PIN;
 }
 
-void convert_ID(void)
+static void convert_ID(void)
 {
 	int i, k = 0;
 	size_t n = sizeof(ID_array)/sizeof(ID_array[0]);
