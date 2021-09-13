@@ -10,8 +10,8 @@
 
 #include "logic_module.h"
 #include "decoder.h"
-//#include "gpio_pdrv.h"
-//#include "timer_drv.h"
+#include "gpio_pdrv.h"
+#include "timer_drv.h"
 
 /*******************************************************************************
  * CONSTANT AND MACRO DEFINITIONS USING #DEFINE
