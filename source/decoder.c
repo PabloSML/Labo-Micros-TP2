@@ -269,6 +269,7 @@ bool decoder_hasEvent(void){
                     else{
                         state = DECODER_position;
                     }
+                    updateDisplay();
                 }
                 else if (prevButtonEv == BUTTON_eLKP)
                 {
