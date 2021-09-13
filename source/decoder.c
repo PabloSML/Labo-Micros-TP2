@@ -12,6 +12,7 @@
 #include "button_drv.h"
 #include "encoder_drv.h"
 #include "7seg_drv.h"
+#include "timer_drv.h"
 
 /*******************************************************************************
  * CONSTANT AND MACRO DEFINITIONS USING #DEFINE
@@ -22,6 +23,8 @@
 #define DEFAULT_INT {INTENSITY_MAXVALUE}
 
 #define BLINK_SPEED  500
+
+#define OPEN_TIME               (5000U*TIMER_SCALING)
 
 /*******************************************************************************
  * ENUMERATIONS AND STRUCTURES AND TYPEDEFS
@@ -42,6 +45,8 @@ typedef enum {
 void change_number(EncoderEvent_t move);
 void move_cursor(EncoderEvent_t move);
 bool decoder_validateNumber(void);
+static void number2char(void);
+static void open_isr(void);
 
 /*******************************************************************************
  * ROM CONST VARIABLES WITH FILE LEVEL SCOPE
@@ -71,7 +76,10 @@ static int8_t *numberpos;
 static uint8_t maxvalue;
 static uint8_t minvalue;
 
+static tim_id_t timerId;
+static ttick_t timerTicks = OPEN_TIME;
 
+static bool restart = false;
 
 //Si estoy modificando el numero o moviendome de posicion
 static DecoderState_t state;
@@ -88,6 +96,24 @@ static DecoderType_t type = -1;
  *******************************************************************************
  ******************************************************************************/
 
+bool decoderInit(void)
+{
+    static bool yaInit = false;
+    
+  if (!yaInit) // init decoder once
+  {
+    timerInit();
+    timerId = timerGetId();
+    if(timerId != TIMER_INVALID_ID)
+    {
+      yaInit = true;
+    }
+  }
+
+  return yaInit;
+}
+
+
 void updateDisplay(void){
     dispCLR();
     uint8_t len = 0;
@@ -100,6 +126,7 @@ void updateDisplay(void){
         dispMSG(open, 4);
     }
     else{
+        number2char();
         uint8_t len =size - (cursor/4)*4;
         if(len > 4){len =4;}
         dispMSG(&char_number[(cursor/4)*4],len );
@@ -232,6 +259,10 @@ void decoder(DecoderType_t dtype){
             break;
         case DECODER_open:
             numberpos = open;
+            timerStart(timerId, timerTicks, TIM_MODE_SINGLESHOT, &open_isr);
+            break;
+        default:
+            break;
     }
     if((type == DECODER_id)|(type == DECODER_pin)){
 
@@ -255,10 +286,10 @@ bool decoder_hasEvent(void){
                 /* Act on release... */
                 break;
             case BUTTON_eRelease:
-                if(type == DECODER_open){
-                    ev = DECODER_restart;
-                }
-                else if(type == DECODER_intensity){
+                // if(type == DECODER_open){
+                //     ev = DECODER_restart;
+                // }
+                if((type == DECODER_intensity) && (prevButtonEv != BUTTON_eTypeMatic)){
                     ev = DECODER_inputnum;
                 }
                 else if(prevButtonEv == BUTTON_ePress)
@@ -269,6 +300,7 @@ bool decoder_hasEvent(void){
                     else{
                         state = DECODER_position;
                     }
+                    updateDisplay();
                 }
                 else if (prevButtonEv == BUTTON_eLKP)
                 {
@@ -279,16 +311,12 @@ bool decoder_hasEvent(void){
                         ev = DECODER_inputerror;
                     }
                 }
-                else if (prevButtonEv == BUTTON_eTypeMatic)
-                {
-                    ev = DECODER_restart;
-                }
                 break;
             case BUTTON_eLKP:
                 /* Act on release... */
                 break;
             case BUTTON_eTypeMatic:
-                /* Act on release... */
+            	ev = DECODER_restart;
                 break;
             default:
                 break;
@@ -303,6 +331,11 @@ bool decoder_hasEvent(void){
             change_number(encoder_getEvent());
         }
         updateDisplay();
+    }
+    else if(restart)
+    {
+        restart = false;
+        ev = DECODER_restart;
     }
     if(ev == DECODER_noev){
         return false;
@@ -370,7 +403,18 @@ bool decoder_validateNumber(void){
     return valid;
 }
 
-void number2char(void){
+/*******************************************************************************
+ *******************************************************************************
+                        LOCAL FUNCTION DEFINITIONS
+ *******************************************************************************
+ ******************************************************************************/
+
+static void open_isr(void)
+{
+    restart = true;
+}
+
+static void number2char(void){
     for(uint8_t i = 0; i < size; i++)
     {
         if(numberpos[i] == GUION){

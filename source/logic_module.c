@@ -140,17 +140,26 @@ void run_logic_module(void){
 					break;
 				case DECODER_id:
 					ID = decoder_getNumber();
-					//No es necesario chequear que el ID este dentro de los usuarios, se chequea con el PIN
-					estado = DECODER_pin;
-					ledOn(LED_3);
-					ledOn(LED_2);
-					ledOff(LED_1);
-					waiting_for_PIN = true; //No es necesario si vamos a usar estados
-					decoder(estado);
+					if (check_ID())
+					{
+						estado = DECODER_pin;
+						ledOn(LED_3);
+						ledOn(LED_2);
+						ledOff(LED_1);
+						waiting_for_PIN = true; //No es necesario si vamos a usar estados
+						decoder(estado);
+					}
+					else{
+						estado = DECODER_id;
+						ledOn(LED_3);
+						ledOff(LED_2);
+						ledOff(LED_1);
+						decoder(estado);
+					}
 					break;
 				case DECODER_pin:
 					PIN = decoder_getNumber();
-					if(check_ID()&check_PIN()){
+					if(check_PIN()){
 						estado = DECODER_open;
 						ledOn(LED_3);
 						ledOn(LED_2);
@@ -177,6 +186,9 @@ void run_logic_module(void){
 			PIN = 0;
 			LM_ev=LM_RESET;
 			decoder(DECODER_intensity); //Lo mando setear la intensidad
+			ledOff(LED_3);
+			ledOff(LED_2);
+			ledOff(LED_1);
 			//borrar display
 	    	//
 	        break;
@@ -266,7 +278,7 @@ bool check_ID(){
 	bool valid_ID=false;
 	uint8_t n = (uint8_t)(sizeof(valid_credentials.valid_IDs)/sizeof(valid_credentials.valid_IDs[0]));
 
-	while(posc<n)
+	while((posc < n) && (valid_ID == false))
 	{
 		if (valid_credentials.valid_IDs[posc]==ID)
 			valid_ID=true;
@@ -279,8 +291,8 @@ bool check_ID(){
 }
 
 void upload_valid_credentials(void){
-	uint64_t validIDs[5] = {1234567891UL,1111122222UL,9988776622UL,3434567845UL,5544367812UL};
-	uint64_t validPINs[5] = {1234UL,12345UL,11111UL,23452UL,1122UL};
+	uint64_t validIDs[5] = {12345678UL,11112222UL,11111111UL,34345678UL,55443678UL};
+	uint64_t validPINs[5] = {1234UL,12345UL,1111UL,23452UL,1122UL};
 	for(uint8_t i = 0; i < 5; i++){
 		valid_credentials.valid_IDs[i] = validIDs[i];
 		valid_credentials.valid_PINs[i] = validPINs[i];
@@ -290,7 +302,6 @@ void upload_valid_credentials(void){
 
 bool check_PIN(void)
 {
-	uint8_t posc = 0;
 	bool valid_PIN = false;
 
 	if(valid_credentials.valid_PINs[posc_ID] == PIN)
@@ -302,7 +313,7 @@ bool check_PIN(void)
 void convert_ID(void)
 {
 	int i, k = 0;
-	size_t n = sizeof(ID_array)/sizeof(ID_array[0]);
+	uint8_t n = (uint8_t)(sizeof(ID_array)/sizeof(ID_array[0]));
 
 	for (i = 0; i < n; i++)
 	    k = 10 * k + ID_array[i] + 1;

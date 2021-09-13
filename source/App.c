@@ -148,8 +148,8 @@ void App_Init (void)
 void App_Run (void)
 {
 
-   if(magreader_hasEvent())
-    {
+  //  if(magreader_hasEvent())
+  //   {
     //     switch(magreader_getEvent())
     //     {
     //         case MAGREADER_cardsliding:

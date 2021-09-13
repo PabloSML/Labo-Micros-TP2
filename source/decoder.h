@@ -30,6 +30,8 @@
 #define PIN_MINDIGITNUMBER      0
 #define PIN_MAXDIGITNUMBER      9
 
+
+
 /*******************************************************************************
  * ENUMERATIONS AND STRUCTURES AND TYPEDEFS
  ******************************************************************************/
@@ -59,6 +61,7 @@ typedef enum
  * FUNCTION PROTOTYPES WITH GLOBAL SCOPE
  ******************************************************************************/
 
+bool decoderInit(void);
 
 //ingresas en que estado estas (Intensity, pin o id) y devuelve evento (noev, inputnum o restart)
 void decoder(DecoderType_t dtype);
