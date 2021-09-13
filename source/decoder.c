@@ -258,6 +258,9 @@ bool decoder_hasEvent(void){
                 if(type == DECODER_open){
                     ev = DECODER_restart;
                 }
+                else if(type == DECODER_intensity){
+                    ev = DECODER_inputnum;
+                }
                 else if(prevButtonEv == BUTTON_ePress)
                 {
                     if(state == DECODER_position){
@@ -269,7 +272,7 @@ bool decoder_hasEvent(void){
                 }
                 else if (prevButtonEv == BUTTON_eLKP)
                 {
-                    if(decoder_validateNumber){
+                    if(decoder_validateNumber()){
                         ev = DECODER_inputnum;
                     }
                     else{
