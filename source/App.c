@@ -148,30 +148,6 @@ void App_Init (void)
 void App_Run (void)
 {
 
-  //  if(magreader_hasEvent())
-  //   {
-  //       switch(magreader_getEvent())
-  //       {
-  //           case MAGREADER_cardsliding:
-  //             ledOn(LED_3);
-  //             ledOff(LED_2);
-  //             ledOff(LED_1);
-  //           break;
-  //           case MAGREADER_carderror:
-  //             ledOff(LED_3);
-  //             ledOn(LED_2);
-  //             ledOff(LED_1);
-  //           break;
-  //           case MAGREADER_cardUpload:
-  //           	len = getPANlen();
-  //           	pan = getPAN();
-  //             ledOff(LED_3);
-  //             ledOff(LED_2);
-  //             ledOn(LED_1);
-  //           break;
-  //       }
-  //   }
-
   run_logic_module();
   
 }
