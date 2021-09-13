@@ -38,11 +38,10 @@
 /*******************************************************************************
  * FUNCTION PROTOTYPES FOR PRIVATE FUNCTIONS WITH FILE LEVEL SCOPE
  ******************************************************************************/
- bool check_ID();
- bool check_PIN();
- void convert_ID();
- void convert_PIN();
- void upload_valid_credentials();
+ static bool check_ID();
+ static bool check_PIN();
+ static void convert_ID();
+ static void upload_valid_credentials();
 
 /*******************************************************************************
  * ROM CONST VARIABLES WITH FILE LEVEL SCOPE
@@ -272,7 +271,7 @@ int get_PIN(void){
                         LOCAL FUNCTION DEFINITIONS
  *******************************************************************************
  ******************************************************************************/
-bool check_ID(){
+static bool check_ID(){
 
 	uint8_t posc = 0;
 	bool valid_ID=false;
@@ -300,7 +299,7 @@ void upload_valid_credentials(void){
 }
 
 
-bool check_PIN(void)
+static bool check_PIN(void)
 {
 	bool valid_PIN = false;
 
@@ -310,7 +309,7 @@ bool check_PIN(void)
 	return valid_PIN;
 }
 
-void convert_ID(void)
+static void convert_ID(void)
 {
 	int i, k = 0;
 	uint8_t n = (uint8_t)(sizeof(ID_array)/sizeof(ID_array[0]));
