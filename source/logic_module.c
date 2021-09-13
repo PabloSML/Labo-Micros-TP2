@@ -81,7 +81,7 @@ bool logic_module_init(void){
 	ledOn(LED_1);
 	buttonInit();
 	encoderInit();
-	start_decoder();
+	//start_decoder();  //No es necesario la inicializacion
 	magneticReaderInit();
 }
 
