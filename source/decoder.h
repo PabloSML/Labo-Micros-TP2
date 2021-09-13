@@ -61,14 +61,35 @@ typedef enum
  * FUNCTION PROTOTYPES WITH GLOBAL SCOPE
  ******************************************************************************/
 
+/**
+ * @brief Initialize decoder
+
+ */
 bool decoderInit(void);
 
 //ingresas en que estado estas (Intensity, pin o id) y devuelve evento (noev, inputnum o restart)
+
+/**
+ * @brief Constructor, input a DecoderType to get events
+ */
 void decoder(DecoderType_t dtype);
 
-
+/**
+ * @brief Check events from drivers
+ * @return true if there's an event, otherwise return false
+ */
 bool decoder_hasEvent(void);
+
+/**
+ * @brief Get decoder event DecoderEvent_t
+ * @return Return a DecoderEvent_t to process
+ */
 DecoderEvent_t decoder_getEvent(void);
+
+/**
+ * @brief Get number (ID, PIN)
+ * @return return whole number
+ */
 int64_t decoder_getNumber(void);
 
 
