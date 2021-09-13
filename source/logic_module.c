@@ -39,9 +39,29 @@
 /*******************************************************************************
  * FUNCTION PROTOTYPES FOR PRIVATE FUNCTIONS WITH FILE LEVEL SCOPE
  ******************************************************************************/
+
+   /**
+ * @brief Checks if input ID is a valid one registered in the data base
+ * @return bool
+ */
  static bool check_ID();
+
+   /**
+ * @brief Checks if input PIN is a valid one registered in the data base
+ * @return bool
+ */
  static bool check_PIN();
+
+   /**
+ * @brief converts ID from the magnetic reader in array format to digit format 
+ * @return void 
+ */ 
  static void convert_ID();
+
+   /**
+ * @brief Initialize the data base with IDs and PINs 
+ * @return void
+ */
  static void upload_valid_credentials();
 
 /*******************************************************************************
@@ -54,25 +74,22 @@
 static uint8_t ID_array[8];
 static uint8_t PIN_array[5] = {-1};
 static uint8_t posc_ID = 0;
-static uint8_t posc_ptr = 0;
 static uint64_t ID=0;
-static uint64_t PIN=0x00;
+static uint64_t PIN=0;
 static credentials_format valid_credentials;
-static LM_event_t LM_ev = LM_No_Event;
 static DecoderEvent_t decoderEv = DECODER_noev;
 static MagReaderEvent_t magreaderEv = MAGREADER_noev;
 static uint8_t panLen = 0;
 static bool waiting_for_PIN = false;
-
 static DecoderType_t estado = DECODER_intensity;
 
-//static unsigned int valid_IDs[5];
-//static unsigned int valid_PINs[5];
+
 /*******************************************************************************
  *******************************************************************************
                         GLOBAL FUNCTION DEFINITIONS
  *******************************************************************************
  ******************************************************************************/
+
 
 bool logic_module_init(void)
 {
@@ -84,7 +101,6 @@ bool logic_module_init(void)
 	ledInit();
 	decoder(DECODER_intensity);
 	yaInit = true;
-	//initialize the drivers (quizás)
   }
 
   return yaInit;
@@ -92,56 +108,25 @@ bool logic_module_init(void)
 
 void run_logic_module(void){
 
-	// int8_t event = 0x00;
+
 
 	if(decoder_hasEvent())
 	{
 		decoderEv = decoder_getEvent(); //fetch event
 		switch(decoderEv)
 		{
-
 	    case DECODER_inputnum: //From encoder
-			//*****Germo: comente esto porque al agregar el estado de la intensidas, se necesitaba mas que un flag para ver si esta en ID o PIN
-			//***** Fijate si te convence
-
-			/*if(waiting_for_PIN)
-			{
-				PIN = decoder_getNumber();
-				if(check_PIN())
-				{
-					LM_ev=LM_VALID_PIN;
-					decoder(DECODER_id); //restart
-				}
-				else
-				{
-					LM_ev=LM_INVALID_PIN;
-				}
-			}
-			else
-			{
-				ID = decoder_getNumber();
-				if(check_ID())
-				{
-					LM_ev=LM_VALID_ID;
-					waiting_for_PIN=true;
-					decoder(DECODER_pin);
-				}
-				else
-				{
-					LM_ev=LM_INVALID_ID;
-				}
-			}*/
 			switch(estado){
 				case DECODER_intensity:
-					estado = DECODER_id;
-					ledOn(LED_3);
+					estado = DECODER_id; 
+					ledOn(LED_3);  //prendo los LEDs como indicador 
 					ledOff(LED_2);
 					ledOff(LED_1);
-					decoder(estado);
-					break;
+					decoder(estado); //cambio el estado del decoder 
+					break; 
 				case DECODER_id:
-					ID = decoder_getNumber();
-					if (check_ID())
+					ID = decoder_getNumber(); 
+					if (check_ID()) 
 					{
 						estado = DECODER_pin;
 						ledOn(LED_3);
@@ -150,8 +135,8 @@ void run_logic_module(void){
 						decoder(estado);
 					}
 					else{
-						estado = DECODER_invalid;
-						ledBlink(LED_1, 500U);
+						estado = DECODER_invalid; //detecto un error en el ID
+						ledBlink(LED_1, 500U); //parpadean todos los LEDs por 5 segundos 
 						ledBlink(LED_2, 500U);
 						ledBlink(LED_3, 500U);
 						decoder(estado);
@@ -167,8 +152,8 @@ void run_logic_module(void){
 						decoder(estado);
 					}
 					else{
-						estado = DECODER_invalid;
-						ledBlink(LED_1, 500U);
+						estado = DECODER_invalid;   //detecto un error en el PIN
+						ledBlink(LED_1, 500U);  //parpadean todos los LEDs por 5 segundos 
 						ledBlink(LED_2, 500U);
 						ledBlink(LED_3, 500U);
 						decoder(estado);
@@ -182,7 +167,6 @@ void run_logic_module(void){
 		case DECODER_restart:
 			ID = 0;
 			PIN = 0;
-			LM_ev=LM_RESET;
 			if (estado == DECODER_invalid)
 			{
 				estado = DECODER_id;
@@ -198,8 +182,7 @@ void run_logic_module(void){
 				ledOff(LED_1);
 			}
 			decoder(estado); //Lo mando setear la intensidad o id si fue inválido
-			//borrar display
-	    	//
+			/
 	        break;
 
 		case DECODER_inputerror:
@@ -207,7 +190,7 @@ void run_logic_module(void){
 			break;
 
 	    default:
-	        //if(intensity set){ state = WAIT_ID}
+	        
 	        break;
 		}
 	}	
@@ -227,7 +210,6 @@ void run_logic_module(void){
 					for(uint8_t i = 0; i < ID_LEN; i++){
 						ID_array[i] = pan[i];
 					}
-	    			//ID_array = (uint8_t *)getPAN();
 	    			convert_ID();
 					if(check_ID())
 					{
@@ -237,11 +219,7 @@ void run_logic_module(void){
 						ledOff(LED_1);
 						decoder(estado);
 					}
-					else
-						LM_ev=LM_INVALID_ID;
 				}
-				else
-					LM_ev=LM_INVALID_ID;
 				break;
 
 			case MAGREADER_carderror: 
@@ -253,7 +231,7 @@ void run_logic_module(void){
 				break;
 		
 			default:
-				//if(intensity set){ state = WAIT_ID}
+				
 				break;
 
 		}
@@ -261,26 +239,6 @@ void run_logic_module(void){
 }
 
 
-bool logic_module_hasEvent(void){
-	return LM_ev;
-}
-
-
-LM_event_t logic_module_getEvent(void){
-	return LM_ev;
-}
-
-
-int get_ID(void){
-
-	return ID;
-}
-
-
-int get_PIN(void){
-
-	return PIN;
-}
 /*******************************************************************************
  *******************************************************************************
                         LOCAL FUNCTION DEFINITIONS
@@ -290,7 +248,7 @@ static bool check_ID(){
 
 	uint8_t posc = 0;
 	bool valid_ID=false;
-	uint8_t n = (uint8_t)(sizeof(valid_credentials.valid_IDs)/sizeof(valid_credentials.valid_IDs[0]));
+	uint8_t n = (uint8_t)(sizeof(valid_credentials.valid_IDs)/sizeof(valid_credentials.valid_IDs[0])); //detecto la cantidad de elementos 
 
 	while((posc < n) && (valid_ID == false))
 	{
@@ -299,7 +257,7 @@ static bool check_ID(){
 		else
 			posc++;
 	}
-	posc_ID = posc;
+	posc_ID = posc;  //guardo la posición del ID válido
 
 	return valid_ID;
 }
@@ -327,11 +285,11 @@ static bool check_PIN(void)
 static void convert_ID(void)
 {
 	int i = 0;
-	uint8_t n = (uint8_t)(sizeof(ID_array)/sizeof(ID_array[0]));
+	uint8_t n = (uint8_t)(sizeof(ID_array)/sizeof(ID_array[0])); //detecto la cantidad de elementos 
 	ID = 0;
 
 	for (i = 0; i < n; i++)
-		ID = ID*10 + ID_array[i];
+		ID = ID*10 + ID_array[i];  //ID en formato "digitos"
 
 }
 
