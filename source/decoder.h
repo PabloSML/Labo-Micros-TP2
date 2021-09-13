@@ -63,7 +63,6 @@ typedef enum
 
 /**
  * @brief Initialize decoder
-
  */
 bool decoderInit(void);
 
@@ -71,6 +70,7 @@ bool decoderInit(void);
 
 /**
  * @brief Constructor, input a DecoderType to get events
+ * @param dtype DecoderType_t (Intesity, ID, PIN, ...)
  */
 void decoder(DecoderType_t dtype);
 
