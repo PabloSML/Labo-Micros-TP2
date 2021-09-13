@@ -10,6 +10,7 @@
 
 #include "logic_module.h"
 #include "decoder.h"
+#include "led_drv.h"
 #include "gpio_pdrv.h"
 #include "timer_drv.h"
 
@@ -52,12 +53,14 @@
  ******************************************************************************/
 static uint8_t ID_array[8] ={-1};
 static uint8_t PIN_array[5] = {-1};
-static char posc_ID = -1;
-static char posc_ptr = -1;
+static uint8_t posc_ID = 0;
+static uint8_t posc_ptr = 0;
 static uint64_t ID=0x00;
 static uint64_t PIN=0x00;
 static credentials_format valid_credentials;
 static LM_event_t LM_ev = LM_No_Event;
+static DecoderEvent_t decoderEv = DECODER_noev;
+static MagReaderEvent_t magreaderEv = MAGREADER_noev;
 static bool waiting_for_PIN = false;
 
 static DecoderType_t estado = DECODER_intensity;
@@ -70,30 +73,31 @@ static DecoderType_t estado = DECODER_intensity;
  *******************************************************************************
  ******************************************************************************/
 
-bool logic_module_init(void){
-	
-	bool proper_initialization =false;
-	
-	upload_valid_credentials();
+bool logic_module_init(void)
+{
+  static bool yaInit = false;
+    
+  if (!yaInit) // init peripheral
+  {
+    upload_valid_credentials();
+	ledInit();
+	decoder(DECODER_intensity);
+	yaInit = true;
+	//initialize the drivers (quizás)
+  }
 
-	//initialize the drivers
-	ledInit(); 
-	ledOn(LED_1);
-	buttonInit();
-	encoderInit();
-	//start_decoder();  //No es necesario la inicializacion
-	magneticReaderInit();
+  return yaInit;
 }
-
 
 void run_logic_module(void){
 
-	int8_t event = 0x00;
+	// int8_t event = 0x00;
 
 	if(decoder_hasEvent())
 	{
-		event = decoder_getEvent(); //fetch event
-		switch(event){
+		decoderEv = decoder_getEvent(); //fetch event
+		switch(decoderEv)
+		{
 
 	    case DECODER_inputnum: //From encoder
 			//*****Germo: comente esto porque al agregar el estado de la intensidas, se necesitaba mas que un flag para ver si esta en ID o PIN
@@ -129,14 +133,18 @@ void run_logic_module(void){
 			switch(estado){
 				case DECODER_intensity:
 					estado = DECODER_id;
-					//*******Prender 1 led
+					ledOn(LED_3);
+					ledOff(LED_2);
+					ledOff(LED_1);
 					decoder(estado);
 					break;
 				case DECODER_id:
 					ID = decoder_getNumber();
 					//No es necesario chequear que el ID este dentro de los usuarios, se chequea con el PIN
 					estado = DECODER_pin;
-					//*******Prender 2 leds
+					ledOn(LED_3);
+					ledOn(LED_2);
+					ledOff(LED_1);
 					waiting_for_PIN = true; //No es necesario si vamos a usar estados
 					decoder(estado);
 					break;
@@ -144,12 +152,16 @@ void run_logic_module(void){
 					PIN = decoder_getNumber();
 					if(check_ID()&check_PIN()){
 						estado = DECODER_open;
-						///*******Prender los 3 leds
+						ledOn(LED_3);
+						ledOn(LED_2);
+						ledOn(LED_1);
 						decoder(estado);
 					}
 					else{
 						estado = DECODER_id;
-						//*******Prender 1 led
+						ledOn(LED_3);
+						ledOff(LED_2);
+						ledOff(LED_1);
 						decoder(estado);
 					}
 					waiting_for_PIN = false; //No es necesario si vamos a usar estados
@@ -181,9 +193,10 @@ void run_logic_module(void){
 
 	else if(magreader_hasEvent()&& (!waiting_for_PIN))
 	{
-		event=magreader_getEvent();  //fetch event
+		magreaderEv = magreader_getEvent();  //fetch event
 		
-		switch(event){
+		switch(magreaderEv)
+		{
 
 			case MAGREADER_cardUpload: //From magnetic card
 	    		if(getPANlen()==8){
@@ -249,9 +262,9 @@ int get_PIN(void){
  ******************************************************************************/
 bool check_ID(){
 
-	unsigned char posc=0;
+	uint8_t posc = 0;
 	bool valid_ID=false;
-	size_t n = sizeof(valid_credentials.valid_IDs)/sizeof(valid_credentials.valid_IDs[0]);
+	uint8_t n = (uint8_t)(sizeof(valid_credentials.valid_IDs)/sizeof(valid_credentials.valid_IDs[0]));
 
 	while(posc<n)
 	{
@@ -260,14 +273,14 @@ bool check_ID(){
 		else
 			posc++;
 	}
-	posc_ID=posc;
+	posc_ID = posc;
 
 	return valid_ID;
 }
 
 void upload_valid_credentials(void){
-	uint8_t validIDs[5] = {1234567891,1111122222,9988776622,3434567845,5544367812};
-	uint8_t validPINs[5] = {1234,12345,11111,23452,1122};
+	uint64_t validIDs[5] = {1234567891UL,1111122222UL,9988776622UL,3434567845UL,5544367812UL};
+	uint64_t validPINs[5] = {1234UL,12345UL,11111UL,23452UL,1122UL};
 	for(uint8_t i = 0; i < 5; i++){
 		valid_credentials.valid_IDs[i] = validIDs[i];
 		valid_credentials.valid_PINs[i] = validPINs[i];
@@ -275,17 +288,19 @@ void upload_valid_credentials(void){
 }
 
 
-bool check_PIN(){
-	unsigned char posc=0;
-	bool valid_PIN=false;
+bool check_PIN(void)
+{
+	uint8_t posc = 0;
+	bool valid_PIN = false;
 
-	if(valid_credentials.valid_PINs[posc_ID]==PIN)
-		valid_PIN=true;
+	if(valid_credentials.valid_PINs[posc_ID] == PIN)
+		valid_PIN = true;
 
 	return valid_PIN;
 }
 
-void convert_ID(){
+void convert_ID(void)
+{
 	int i, k = 0;
 	size_t n = sizeof(ID_array)/sizeof(ID_array[0]);
 

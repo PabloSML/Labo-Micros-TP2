@@ -12,7 +12,6 @@
 #include "led_drv.h"
 #include "7seg_drv.h"
 #include "encoder_drv.h"
-#include "magnetic_reader_drv.h"
 #include "gpio_pdrv.h"
 #include "hardware.h"
 #include "MK64F12.h"
@@ -118,10 +117,10 @@ void App_Init (void)
   // gpioMode(PIN_RCHB, INPUT);
   // gpioMode(PIN_RSWITCH, INPUT);
 
-  PORT_Type * portpointer[] = PORT_BASE_PTRS;
-  portpointer[PB]->ISFR |= 0xFFFFU;
+  // PORT_Type * portpointer[] = PORT_BASE_PTRS;
+  // portpointer[PA]->ISFR |= 0xFFFFU;
   
-  NVIC_EnableIRQ(PORTB_IRQn);
+  // NVIC_EnableIRQ(PORTA_IRQn);
 
   // Inits for FRDM
   // ledInit(LED_RED);
@@ -131,11 +130,14 @@ void App_Init (void)
 
   // Inits for DJ_BOARD
   ledInit();
+  // ledOn(LED_1);
   buttonInit();
   encoderInit();
   sevenSegInit();
-  magneticReaderInit();
-  logic_module_init();
+  
+
+  // irq_id_t id = irqGetId(SW3);
+  // gpioIRQ(SW3, PORT_eInterruptFalling, id, &ledToggle);
 
   hw_EnableInterrupts();
   
@@ -145,7 +147,111 @@ void App_Init (void)
 /* Función que se llama constantemente en un ciclo infinito */
 void App_Run (void)
 {
-  run_logic_module();
+
+  const char* msg = "Buenardo Pancho";
+  uint8_t msg_len = strlen(msg);
+  dispMSG(msg, msg_len);
+
+  if (encoder_hasEvent())  
+  {
+
+    encoderEv = encoder_getEvent();
+
+    switch (encoderEv)
+    {
+
+    case ENCODER_eRightTurn:
+      // newFocus = (led_label_t)((oldFocus + 2) % 3);
+      scrollRightMsg();
+      break;
+    
+    case ENCODER_eLeftTurn:
+      // newFocus = (led_label_t)((oldFocus + 1) % 3);
+      scrollLeftMsg();
+      break;
+    
+    default:
+      break;
+    }
+
+    // ledOff(oldFocus);
+    // ledOn(newFocus);
+
+    // oldFocus = newFocus;
+
+  }
+
+
+  if(button_hasEvent())
+  {
+    newButtonEv = button_getEvent();
+
+    switch (newButtonEv)
+    {
+    case BUTTON_ePress:
+      /* Act on release... */
+      break;
+    
+    case BUTTON_eRelease:
+      if(prevButtonEv == BUTTON_ePress)
+      {
+        dispToggle(DISP_1);
+        dispToggle(DISP_2);
+        dispToggle(DISP_3);
+        dispToggle(DISP_4);
+        // ledOn_timeout(LED_1, 3000U);
+        // led_on = !led_on;
+      }
+      else if (prevButtonEv == BUTTON_eLKP)
+      {
+        dispBlink(DISP_1, 200U);
+        dispBlink(DISP_2, 969U);
+        dispBlink(DISP_3, 755U);
+        dispBlink(DISP_4, 420U);
+        // static bool test_flag = false;
+        // if(test_flag)
+        // {
+        //   setBright(MAX);
+        //   test_flag = false;
+        // }
+        // else
+        // {
+        //   setBright(MID);
+        //   test_flag = true;
+        // }
+        // if(led_on)
+        //   cycle_led_color();
+        // ledBlink(LED_1, 500U);
+        // ledBlink(LED_2, 1000U);
+        // ledBlink(LED_3, 100U);
+      }
+      break;
+
+    case BUTTON_eLKP:
+      /* Act on release... */
+      break;
+
+    case BUTTON_eTypeMatic:
+      {
+        dispOff(DISP_1);
+        dispOff(DISP_2);
+        dispOff(DISP_3);
+        dispOff(DISP_4);
+        // if(led_on)
+        //   cycle_led_color();
+        // ledOff(LED_1);
+        // ledOff(LED_2);
+        // ledOff(LED_3);
+      }
+      break;
+    
+    default:
+      break;
+    }
+    
+    prevButtonEv = newButtonEv;
+
+  }
   
 }
 
@@ -156,7 +262,38 @@ void App_Run (void)
  *******************************************************************************
  ******************************************************************************/
 
-
+// static void cycle_led_color(void)
+// {
+//   switch (led_color) 
+//   {
+//   case RED:
+//     if(led_on)
+//     {
+//       ledOff(LED_RED);
+//       ledOn(LED_GREEN);
+//     }
+//     led_color = GREEN;
+//     break;
+//   case GREEN:
+//     if(led_on)
+//     {
+//       ledOff(LED_GREEN);
+//       ledOn(LED_BLUE);
+//     }
+//     led_color = BLUE;
+//     break;
+//   case BLUE:
+//     if(led_on)
+//     {
+//       ledOff(LED_BLUE);
+//       ledOn(LED_RED);
+//     }
+//     led_color = RED;
+//     break;
+//   default:
+//     break;
+//   }
+// }
 
 /*******************************************************************************
  ******************************************************************************/
