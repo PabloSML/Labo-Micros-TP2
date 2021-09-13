@@ -246,7 +246,8 @@ void decoder(DecoderType_t dtype){
 
 //ingresas en que estado estas (Intensity, pin o id) y devuelve evento (noev, inputnum o restart)
 
-bool decoder_hasEvent(void){  
+bool decoder_hasEvent(void){ 
+    ev = DECODER_noev; 
     if(button_hasEvent()){
         newButtonEv = button_getEvent();
         switch (newButtonEv){
