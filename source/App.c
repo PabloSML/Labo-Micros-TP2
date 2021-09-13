@@ -61,6 +61,8 @@ static led_label_t oldFocus = LED_1;
 static led_label_t newFocus = LED_1;
 // static bool led_on = false;
 // static enum led_color_t led_color = RED;
+static uint8_t len;
+static uint8_t* pan;
 
 /*******************************************************************************
  *******************************************************************************
@@ -146,27 +148,29 @@ void App_Init (void)
 void App_Run (void)
 {
 
-  //  if(magreader_hasEvent())
-  //   {
-  //       switch(magreader_getEvent())
-  //       {
-  //           case MAGREADER_cardsliding:
-  //             ledOn(LED_3);
-  //             ledOff(LED_2);
-  //             ledOff(LED_1);
-  //           break;
-  //           case MAGREADER_carderror:
-  //             ledOff(LED_3);
-  //             ledOn(LED_2);
-  //             ledOff(LED_1);
-  //           break;
-  //           case MAGREADER_cardUpload:
-  //             ledOff(LED_3);
-  //             ledOff(LED_2);
-  //             ledOn(LED_1);
-  //           break;
-  //       }
-  //   }
+   if(magreader_hasEvent())
+    {
+    //     switch(magreader_getEvent())
+    //     {
+    //         case MAGREADER_cardsliding:
+    //           ledOn(LED_3);
+    //           ledOff(LED_2);
+    //           ledOff(LED_1);
+    //         break;
+    //         case MAGREADER_carderror:
+    //           ledOff(LED_3);
+    //           ledOn(LED_2);
+    //           ledOff(LED_1);
+    //         break;
+    //         case MAGREADER_cardUpload:
+    //         	len = getPANlen();
+    //         	pan = getPAN();
+    //           ledOff(LED_3);
+    //           ledOff(LED_2);
+    //           ledOn(LED_1);
+    //         break;
+    //     }
+    // }
 
   run_logic_module();
   
