@@ -18,6 +18,7 @@
  * CONSTANT AND MACRO DEFINITIONS USING #DEFINE
  ******************************************************************************/
 
+#define ID_LEN			8
 
 /*******************************************************************************
  * ENUMERATIONS AND STRUCTURES AND TYPEDEFS
@@ -50,16 +51,17 @@
 /*******************************************************************************
  * STATIC VARIABLES AND CONST VARIABLES WITH FILE LEVEL SCOPE
  ******************************************************************************/
-static uint8_t ID_array[8] ={-1};
+static uint8_t ID_array[8];
 static uint8_t PIN_array[5] = {-1};
 static uint8_t posc_ID = 0;
 static uint8_t posc_ptr = 0;
-static uint64_t ID=0x00;
+static uint64_t ID=0;
 static uint64_t PIN=0x00;
 static credentials_format valid_credentials;
 static LM_event_t LM_ev = LM_No_Event;
 static DecoderEvent_t decoderEv = DECODER_noev;
 static MagReaderEvent_t magreaderEv = MAGREADER_noev;
+static uint8_t panLen = 0;
 static bool waiting_for_PIN = false;
 
 static DecoderType_t estado = DECODER_intensity;
@@ -145,14 +147,13 @@ void run_logic_module(void){
 						ledOn(LED_3);
 						ledOn(LED_2);
 						ledOff(LED_1);
-						waiting_for_PIN = true; //No es necesario si vamos a usar estados
 						decoder(estado);
 					}
 					else{
-						estado = DECODER_id;
-						ledOn(LED_3);
-						ledOff(LED_2);
-						ledOff(LED_1);
+						estado = DECODER_invalid;
+						ledBlink(LED_1, 500U);
+						ledBlink(LED_2, 500U);
+						ledBlink(LED_3, 500U);
 						decoder(estado);
 					}
 					break;
@@ -166,13 +167,12 @@ void run_logic_module(void){
 						decoder(estado);
 					}
 					else{
-						estado = DECODER_id;
-						ledOn(LED_3);
-						ledOff(LED_2);
-						ledOff(LED_1);
+						estado = DECODER_invalid;
+						ledBlink(LED_1, 500U);
+						ledBlink(LED_2, 500U);
+						ledBlink(LED_3, 500U);
 						decoder(estado);
 					}
-					waiting_for_PIN = false; //No es necesario si vamos a usar estados
 					break;
 				default:
 					break;
@@ -180,14 +180,24 @@ void run_logic_module(void){
 			break;
 		
 		case DECODER_restart:
-			waiting_for_PIN=false;
 			ID = 0;
 			PIN = 0;
 			LM_ev=LM_RESET;
-			decoder(DECODER_intensity); //Lo mando setear la intensidad
-			ledOff(LED_3);
-			ledOff(LED_2);
-			ledOff(LED_1);
+			if (estado == DECODER_invalid)
+			{
+				estado = DECODER_id;
+				ledOn(LED_3);
+				ledOff(LED_2);
+				ledOff(LED_1);
+			}
+			else
+			{
+				estado = DECODER_intensity;
+				ledOff(LED_3);
+				ledOff(LED_2);
+				ledOff(LED_1);
+			}
+			decoder(estado); //Lo mando setear la intensidad o id si fue inválido
 			//borrar display
 	    	//
 	        break;
@@ -210,17 +220,22 @@ void run_logic_module(void){
 		{
 
 			case MAGREADER_cardUpload: //From magnetic card
-	    		if(getPANlen()==8){
-					uint8_t * p = getPAN();
-					for(uint8_t i = 0; i < 8; i++){
-						ID_array[i] = p[i];
+				panLen = getPANlen();
+	    		if(panLen >= ID_LEN)
+				{
+					uint8_t * pan = getPAN();
+					for(uint8_t i = 0; i < ID_LEN; i++){
+						ID_array[i] = pan[i];
 					}
 	    			//ID_array = (uint8_t *)getPAN();
 	    			convert_ID();
 					if(check_ID())
 					{
-						LM_ev=LM_VALID_ID;
-						decoder(DECODER_pin);
+						estado = DECODER_pin;
+						ledOn(LED_3);
+						ledOn(LED_2);
+						ledOff(LED_1);
+						decoder(estado);
 					}
 					else
 						LM_ev=LM_INVALID_ID;
@@ -290,8 +305,8 @@ static bool check_ID(){
 }
 
 void upload_valid_credentials(void){
-	uint64_t validIDs[5] = {12345678UL,11112222UL,11111111UL,34345678UL,55443678UL};
-	uint64_t validPINs[5] = {1234UL,12345UL,1111UL,23452UL,1122UL};
+	uint64_t validIDs[5] = {12345678UL,11112222UL,11111111UL,34345678UL,63913003UL};
+	uint64_t validPINs[5] = {1234UL,12345UL,1111UL,23452UL,1111UL};
 	for(uint8_t i = 0; i < 5; i++){
 		valid_credentials.valid_IDs[i] = validIDs[i];
 		valid_credentials.valid_PINs[i] = validPINs[i];
@@ -311,13 +326,13 @@ static bool check_PIN(void)
 
 static void convert_ID(void)
 {
-	int i, k = 0;
+	int i = 0;
 	uint8_t n = (uint8_t)(sizeof(ID_array)/sizeof(ID_array[0]));
+	ID = 0;
 
 	for (i = 0; i < n; i++)
-	    k = 10 * k + ID_array[i] + 1;
+		ID = ID*10 + ID_array[i];
 
-	k=ID;
 }
 
 

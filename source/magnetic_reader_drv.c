@@ -171,7 +171,7 @@ static void uploadCardData(void)
   uint8_t i = 0;
   //Cargo PAN
   for(i = 0; parsedRawData[i] != FS; ++i)
-    cardData.PAN[i] = parsedRawData[1 + i];
+    cardData.PAN[i] = (parsedRawData[1 + i] & 0x0F);
   //Cargo largo PAN
   cardData.PANLength = i;
   //Cargo Additional Data

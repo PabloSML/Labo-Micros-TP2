@@ -49,7 +49,7 @@ typedef enum
     DECODER_intensity       = 0x00,
     DECODER_id              = 0x01,
     DECODER_pin             = 0x02,
-    DECODER_waitclick       = 0x03,
+    DECODER_invalid         = 0x03,
     DECODER_open            = 0x04
 } DecoderType_t;
 

@@ -25,6 +25,7 @@
 #define BLINK_SPEED  500
 
 #define OPEN_TIME               (5000U*TIMER_SCALING)
+#define NOPE_TIME               (3000U*TIMER_SCALING)
 
 /*******************************************************************************
  * ENUMERATIONS AND STRUCTURES AND TYPEDEFS
@@ -46,7 +47,7 @@ void change_number(EncoderEvent_t move);
 void move_cursor(EncoderEvent_t move);
 bool decoder_validateNumber(void);
 static void number2char(void);
-static void open_isr(void);
+static void restart_isr(void);
 
 /*******************************************************************************
  * ROM CONST VARIABLES WITH FILE LEVEL SCOPE
@@ -64,7 +65,7 @@ static int8_t id_number[ID_SIZE] = CLEAN_ID;
 static int8_t pin_number[PIN_MAXSIZE] = CLEAN_PIN;
 static int8_t intensity[INTENSITY_SIZE] = DEFAULT_INT;
 static int8_t open[4] = {'O','P','E','N'};
-
+static int8_t nope[4] = {'N', 'O', 'P', 'E'};
 static uint8_t intensityString[4] = {'L','I','=','3'};
 
 static uint8_t char_number[ID_SIZE] = CLEAN_ID;
@@ -124,6 +125,9 @@ void updateDisplay(void){
     }
     else if(type == DECODER_open){
         dispMSG(open, 4);
+    }
+    else if (type == DECODER_invalid){
+        dispMSG(nope, 4);
     }
     else{
         number2char();
@@ -259,7 +263,13 @@ void decoder(DecoderType_t dtype){
             break;
         case DECODER_open:
             numberpos = open;
-            timerStart(timerId, timerTicks, TIM_MODE_SINGLESHOT, &open_isr);
+            timerTicks = OPEN_TIME;
+            timerStart(timerId, timerTicks, TIM_MODE_SINGLESHOT, &restart_isr);
+            break;
+        case DECODER_invalid:
+            numberpos = nope;
+            timerTicks = NOPE_TIME;
+            timerStart(timerId, timerTicks, TIM_MODE_SINGLESHOT, &restart_isr);
             break;
         default:
             break;
@@ -409,7 +419,7 @@ bool decoder_validateNumber(void){
  *******************************************************************************
  ******************************************************************************/
 
-static void open_isr(void)
+static void restart_isr(void)
 {
     restart = true;
 }
