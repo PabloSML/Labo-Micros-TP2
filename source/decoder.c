@@ -11,6 +11,7 @@
 #include "decoder.h"
 #include "button_drv.h"
 #include "encoder_drv.h"
+#include "7seg_drv.h"
 
 /*******************************************************************************
  * CONSTANT AND MACRO DEFINITIONS USING #DEFINE
@@ -19,6 +20,8 @@
 #define CLEAN_ID    {GUION,GUION,GUION,GUION,GUION,GUION,GUION,GUION}
 #define CLEAN_PIN   {GUION,GUION,GUION,GUION,GUION}
 #define DEFAULT_INT {INTENSITY_MAXVALUE}
+
+#define BLINK_SPEED  500
 
 /*******************************************************************************
  * ENUMERATIONS AND STRUCTURES AND TYPEDEFS
@@ -36,6 +39,9 @@ typedef enum {
  * FUNCTION PROTOTYPES FOR PRIVATE FUNCTIONS WITH FILE LEVEL SCOPE
  ******************************************************************************/
 
+void change_number(EncoderEvent_t move);
+void move_cursor(EncoderEvent_t move);
+bool decoder_validateNumber(void);
 
 /*******************************************************************************
  * ROM CONST VARIABLES WITH FILE LEVEL SCOPE
@@ -52,8 +58,20 @@ static uint8_t cursor;
 static int8_t id_number[ID_SIZE] = CLEAN_ID;
 static int8_t pin_number[PIN_MAXSIZE] = CLEAN_PIN;
 static int8_t intensity[INTENSITY_SIZE] = DEFAULT_INT;
+static int8_t open[4] = {'O','P','E','N'};
+
+static uint8_t intensityString[4] = {'L','I','=','3'};
+
+static uint8_t char_number[ID_SIZE] = CLEAN_ID;
 
 static int64_t fullnumber;
+
+static uint8_t size = 0;
+static int8_t *numberpos;
+static uint8_t maxvalue;
+static uint8_t minvalue;
+
+
 
 //Si estoy modificando el numero o moviendome de posicion
 static DecoderState_t state;
@@ -69,28 +87,39 @@ static DecoderType_t type = -1;
                         GLOBAL FUNCTION DEFINITIONS
  *******************************************************************************
  ******************************************************************************/
-void start_decoder(void){
-    for(int8_t i = 0; i < ID_SIZE; i++)
-    {
-        id_number[i] = GUION;
-    }
-    for(int8_t i = 0; i < PIN_MAXSIZE; i++)
-    {
-        pin_number[i] = GUION;
-    }
 
-    cursor = 0;
-
+void updateDisplay(void){
+    dispCLR();
+    uint8_t len = 0;
+    if(type == DECODER_intensity){
+        intensityString[3] = '0' + intensity[0];
+        setBright(intensity[0]*2);
+        dispMSG(intensityString, 4);
+    }
+    else if(type == DECODER_open){
+        dispMSG(open, 4);
+    }
+    else{
+        uint8_t len =size - (cursor/4)*4;
+        if(len > 4){len =4;}
+        dispMSG(&char_number[(cursor/4)*4],len );
+        dispDP((cursor/4), true);
+        switch(state){
+            case DECODER_position:
+                dispBlink(cursor%4,BLINK_SPEED);
+                break;
+            case DECODER_number:
+                dispOn(cursor%4);
+                break;
+            default:
+                break;
+        }
+    }
 }
 
-
 void change_number(EncoderEvent_t move){
-
-    uint8_t maxvalue;
-    uint8_t minvalue;
-    int8_t *numberpos;
-    switch(type){
-        case DECODER_intesity:
+    /*switch(type){
+        case DECODER_intensity:
             maxvalue = INTENSITY_MAXVALUE;
             minvalue = INTENSITY_MINVALUE;
             numberpos = intensity;
@@ -107,7 +136,7 @@ void change_number(EncoderEvent_t move){
             break;
         default:
             break;
-    }
+    }*/
     switch(move){
         case ENCODER_eLeftTurn:
             if(numberpos[cursor] == GUION ){    //Para cuando esta vacio (-) -> (9)
@@ -143,9 +172,8 @@ void change_number(EncoderEvent_t move){
 }
 
 void move_cursor(EncoderEvent_t move){
-    int8_t size;
-    switch(type){
-        case DECODER_intesity:
+    /*switch(type){
+        case DECODER_intensity:
             size = INTENSITY_SIZE;
             break;
         case DECODER_id:
@@ -156,7 +184,7 @@ void move_cursor(EncoderEvent_t move){
             break;
         default:
             break;
-    }
+    }*/
     switch(move){
         case ENCODER_eLeftTurn:
             if(cursor > 0){
@@ -174,7 +202,46 @@ void move_cursor(EncoderEvent_t move){
 
 //start decoder
 void decoder(DecoderType_t dtype){
+    type = dtype;
+    state = DECODER_position;
+    cursor = 0;
+    fullnumber = 0;
+    switch(type){ //select size of number and array to modify
+        case DECODER_intensity:
+            size = INTENSITY_SIZE;
+            maxvalue = INTENSITY_MAXVALUE;
+            minvalue = INTENSITY_MINVALUE;
+            numberpos = intensity;
+            for(int8_t i = 0; i < size; i++)
+            {
+                numberpos[i] = INTENSITY_MAXVALUE;
+                state = DECODER_number;
+            }
+            break;
+        case DECODER_id:
+            size = ID_SIZE;
+            maxvalue = ID_MAXDIGITNUMBER;
+            minvalue = ID_MINDIGITNUMBER;
+            numberpos = id_number;
+            break;
+        case DECODER_pin:
+            size = PIN_MAXSIZE;
+            maxvalue = PIN_MAXDIGITNUMBER;
+            minvalue = PIN_MINDIGITNUMBER;
+            numberpos = pin_number;
+            break;
+        case DECODER_open:
+            numberpos = open;
+    }
+    if((type == DECODER_id)|(type == DECODER_pin)){
 
+        for(int8_t i = 0; i < size; i++)
+        {
+            numberpos[i] = GUION;
+            char_number[i] = GUION;
+        }
+    }
+    updateDisplay();
 }
 
 //ingresas en que estado estas (Intensity, pin o id) y devuelve evento (noev, inputnum o restart)
@@ -187,7 +254,10 @@ bool decoder_hasEvent(void){
                 /* Act on release... */
                 break;
             case BUTTON_eRelease:
-                if(prevButtonEv == BUTTON_ePress)
+                if(type == DECODER_open){
+                    ev = DECODER_restart;
+                }
+                else if(prevButtonEv == BUTTON_ePress)
                 {
                     if(state == DECODER_position){
                         state = DECODER_number;
@@ -198,7 +268,12 @@ bool decoder_hasEvent(void){
                 }
                 else if (prevButtonEv == BUTTON_eLKP)
                 {
-                    ev = DECODER_inputnum;
+                    if(decoder_validateNumber){
+                        ev = DECODER_inputnum;
+                    }
+                    else{
+                        ev = DECODER_inputerror;
+                    }
                 }
                 else if (prevButtonEv == BUTTON_eTypeMatic)
                 {
@@ -223,6 +298,7 @@ bool decoder_hasEvent(void){
         else{
             change_number(encoder_getEvent());
         }
+        updateDisplay();
     }
     if(ev == DECODER_noev){
         return false;
@@ -245,19 +321,14 @@ int64_t decoder_getNumber(void){
     else{
         return -1;
     }
-    
 }
 
 //Validate if number was fully inserted and within the admitted range. Guarda en fullnumber si fue valido.
 //Probado que funciona
 bool decoder_validateNumber(void){
-    uint8_t size = 0;
-    int8_t *numberpos;
-    uint8_t maxvalue;
-    uint8_t minvalue;
     bool valid = true;
     switch(type){
-        case DECODER_intesity:
+        case DECODER_intensity:
             size = INTENSITY_SIZE;
             numberpos = intensity;
             maxvalue = INTENSITY_MAXVALUE;
@@ -295,7 +366,22 @@ bool decoder_validateNumber(void){
     return valid;
 }
 
-
+void number2char(void){
+    for(uint8_t i = 0; i < size; i++)
+    {
+        if(numberpos[i] == GUION){
+            char_number[i] = GUION;
+        }
+        else{
+            if(type == DECODER_pin){
+                char_number[i] = 'H';
+            }
+            else{
+                char_number[i] = '0' + numberpos[i];
+            }
+        }
+    }
+}
 
 
 /******************************************************************************/

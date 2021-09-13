@@ -24,7 +24,7 @@
 
 
 #define INTENSITY_MINVALUE      1
-#define INTENSITY_MAXVALUE      4
+#define INTENSITY_MAXVALUE      3
 #define ID_MINDIGITNUMBER       0
 #define ID_MAXDIGITNUMBER       9
 #define PIN_MINDIGITNUMBER      0
@@ -38,15 +38,17 @@ typedef enum
     DECODER_noev            = 0x00,
 	DECODER_inputnum        = 0x01,
     DECODER_restart         = 0x02,
-    DECODER_inputerror      = 0X03
-  
+    DECODER_inputerror      = 0X03,
+    DECODER_inputclick      = 0x04
 } DecoderEvent_t;
 
 typedef enum 
 {
-    DECODER_intesity        = 0x00,
-    DECODER_pin             = 0x01,
-    DECODER_id              = 0x02
+    DECODER_intensity       = 0x00,
+    DECODER_id              = 0x01,
+    DECODER_pin             = 0x02,
+    DECODER_waitclick       = 0x03,
+    DECODER_open            = 0x04
 } DecoderType_t;
 
 /*******************************************************************************

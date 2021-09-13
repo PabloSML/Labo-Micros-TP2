@@ -24,8 +24,8 @@
 
 
  typedef struct {
-	 unsigned int valid_IDs[5];
-	 unsigned int valid_PINs[5];
+	uint64_t valid_IDs[5];
+	uint64_t valid_PINs[5];
  } credentials_format;
 
 
@@ -51,14 +51,16 @@
  * STATIC VARIABLES AND CONST VARIABLES WITH FILE LEVEL SCOPE
  ******************************************************************************/
 static uint8_t ID_array[8] ={-1};
-static unsigned int PIN_array[5] = {-1};
+static uint8_t PIN_array[5] = {-1};
 static char posc_ID = -1;
 static char posc_ptr = -1;
-static unsigned int ID=0x00;
-static unsigned int PIN=0x00;
+static uint64_t ID=0x00;
+static uint64_t PIN=0x00;
 static credentials_format valid_credentials;
 static LM_event_t LM_ev = LM_No_Event;
 static bool waiting_for_PIN = false;
+
+static DecoderType_t estado = DECODER_intensity;
 
 //static unsigned int valid_IDs[5];
 //static unsigned int valid_PINs[5];
@@ -86,37 +88,75 @@ bool logic_module_init(void){
 
 void run_logic_module(void){
 
-	int event = 0x00;
+	int8_t event = 0x00;
 
 	if(decoder_hasEvent())
 	{
-		event=decoder_getEvent(); //fetch event
+		event = decoder_getEvent(); //fetch event
 		switch(event){
 
 	    case DECODER_inputnum: //From encoder
-			    if(waiting_for_PIN)
+			//*****Germo: comente esto porque al agregar el estado de la intensidas, se necesitaba mas que un flag para ver si esta en ID o PIN
+			//***** Fijate si te convence
+
+			/*if(waiting_for_PIN)
+			{
+				PIN = decoder_getNumber();
+				if(check_PIN())
 				{
-					PIN = decoder_getNumber();
-					if(check_PIN())
-					{
-						LM_ev=LM_VALID_PIN;
-						decoder(DECODER_id); //restart
-					}
-					else
-						LM_ev=LM_INVALID_PIN;
+					LM_ev=LM_VALID_PIN;
+					decoder(DECODER_id); //restart
 				}
 				else
 				{
-					ID = decoder_getNumber();
-					if(check_ID())
-					{
-						LM_ev=LM_VALID_ID;
-						waiting_for_PIN=true;
-						decoder(DECODER_pin);
-					}
-					else
-						LM_ev=LM_INVALID_ID;
+					LM_ev=LM_INVALID_PIN;
 				}
+			}
+			else
+			{
+				ID = decoder_getNumber();
+				if(check_ID())
+				{
+					LM_ev=LM_VALID_ID;
+					waiting_for_PIN=true;
+					decoder(DECODER_pin);
+				}
+				else
+				{
+					LM_ev=LM_INVALID_ID;
+				}
+			}*/
+			switch(estado){
+				case DECODER_intensity:
+					estado = DECODER_id;
+					//*******Prender 1 led
+					decoder(estado);
+					break;
+				case DECODER_id:
+					ID = decoder_getNumber();
+					//No es necesario chequear que el ID este dentro de los usuarios, se chequea con el PIN
+					estado = DECODER_pin;
+					//*******Prender 2 leds
+					waiting_for_PIN = true; //No es necesario si vamos a usar estados
+					decoder(estado);
+					break;
+				case DECODER_pin:
+					PIN = decoder_getNumber();
+					if(check_ID()&check_PIN()){
+						estado = DECODER_open;
+						///*******Prender los 3 leds
+						decoder(estado);
+					}
+					else{
+						estado = DECODER_id;
+						//*******Prender 1 led
+						decoder(estado);
+					}
+					waiting_for_PIN = false; //No es necesario si vamos a usar estados
+					break;
+				default:
+					break;
+			}
 			break;
 		
 		case DECODER_restart:
@@ -124,11 +164,14 @@ void run_logic_module(void){
 			ID = 0;
 			PIN = 0;
 			LM_ev=LM_RESET;
-			decoder(DECODER_id);
+			decoder(DECODER_intensity); //Lo mando setear la intensidad
 			//borrar display
 	    	//
 	        break;
 
+		case DECODER_inputerror:
+			decoder(estado);	//Si le falto un numero en id, que siga en ID, lo mismo para PIN
+			break;
 
 	    default:
 	        //if(intensity set){ state = WAIT_ID}

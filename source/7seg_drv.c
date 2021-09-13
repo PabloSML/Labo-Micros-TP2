@@ -256,6 +256,11 @@ void dispCLR(void)
   {
     msg[i] = SEGMENTS_OFF;
   }
+  for(uint8_t i=0; i < DISP_CANT; i++) //initial state of display
+  {
+    display[i].state = ENABLE;
+    display[i].dp_state = !DP_ACTIVE;
+  }
 }
 
 
