@@ -182,7 +182,6 @@ void run_logic_module(void){
 				ledOff(LED_1);
 			}
 			decoder(estado); //Lo mando setear la intensidad o id si fue inválido
-			/
 	        break;
 
 		case DECODER_inputerror:

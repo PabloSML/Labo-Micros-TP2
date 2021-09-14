@@ -8,6 +8,7 @@
  * INCLUDE HEADER FILES
  ******************************************************************************/
 
+#include "board.h"
 #include "gpio_pdrv.h"
 #include "hardware.h"
 #include "MK64F12.h"
@@ -229,6 +230,8 @@ bool gpioRead (pin_t pin)
 
 static void PORTN_IRQHandler (uint32_t port)
 {
+	gpioWrite(PIN_ISR_TEST, HIGH);
+
 	uint32_t ISFR_temp = portpointer[port]->ISFR;
 
 	for(irq_id_t id = 0; id < portIrq_cant[port]; id++)
@@ -244,6 +247,8 @@ static void PORTN_IRQHandler (uint32_t port)
     		}
 		}
 	}
+
+	gpioWrite(PIN_ISR_TEST, LOW);
 }
 
 __ISR__ PORTA_IRQHandler (void)

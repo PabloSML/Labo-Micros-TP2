@@ -16,10 +16,6 @@
  * CONSTANT AND MACRO DEFINITIONS USING #DEFINE
  ******************************************************************************/
 
-// #define PIN_MAG_EN        PORTNUM2PIN(PB,2) //
-// #define PIN_MAG_DT 	      PORTNUM2PIN(PB,3) //
-// #define PIN_MAG_CLK	      PORTNUM2PIN(PB,10)//
-
 #define PIN_MagEnable   PIN_MAG_EN 	//Enable (Low while card is sliding)
 #define PIN_MagData     PIN_MAG_DT 	//Data
 #define PIN_MagClk      PIN_MAG_CLK	//Clock
@@ -75,6 +71,7 @@ static uint8_t           parsedRawData[MAX_CHAR_LEN];
 static bool              validCardData = false;
 static card_data_format  cardData;
 static MagReaderEvent_t  ev = MAGREADER_noev;
+
 /*******************************************************************************
 *                     GLOBAL FUNCTION DEFINITIONS
 *******************************************************************************/

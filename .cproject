@@ -73,7 +73,15 @@
 								</option>
 								<option id="gnu.c.compiler.option.preprocessor.undef.symbol.569371657" name="Undefined symbols (-U)" superClass="gnu.c.compiler.option.preprocessor.undef.symbol" useByScannerDiscovery="false"/>
 								<option id="gnu.c.compiler.option.include.paths.999642032" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" useByScannerDiscovery="false" valueType="includePath">
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Labo-Micros-TP2/config}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Labo-Micros-TP2/config/hal_drvs}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Labo-Micros-TP2/config/mcal_drvs}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Labo-Micros-TP2/includes}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Labo-Micros-TP2/includes/hal_drvs}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Labo-Micros-TP2/includes/mcal_drvs}&quot;"/>
 									<listOptionValue builtIn="false" value="../source"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Labo-Micros-TP2/source/hal_drvs}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Labo-Micros-TP2/source/mcal_drvs}&quot;"/>
 									<listOptionValue builtIn="false" value="../"/>
 									<listOptionValue builtIn="false" value="../SDK/CMSIS"/>
 									<listOptionValue builtIn="false" value="../SDK/startup"/>
@@ -113,6 +121,7 @@
 								<option id="com.crt.advproject.gas.arch.1111257726" name="Architecture" superClass="com.crt.advproject.gas.arch" useByScannerDiscovery="false" value="com.crt.advproject.gas.target.cm4" valueType="enumerated"/>
 								<option id="gnu.both.asm.option.flags.crt.1244992491" name="Assembler flags" superClass="gnu.both.asm.option.flags.crt" useByScannerDiscovery="false" value="-c -x assembler-with-cpp" valueType="string"/>
 								<option id="gnu.both.asm.option.include.paths.993467898" name="Include paths (-I)" superClass="gnu.both.asm.option.include.paths" useByScannerDiscovery="false" valueType="includePath">
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Labo-Micros-TP2/includes}&quot;"/>
 									<listOptionValue builtIn="false" value="../source"/>
 									<listOptionValue builtIn="false" value="../"/>
 									<listOptionValue builtIn="false" value="../SDK"/>
@@ -235,6 +244,7 @@
 					</folderInfo>
 					<sourceEntries>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="SDK"/>
+						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="includes"/>
 						<entry excluding="mainapp.c" flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="source"/>
 					</sourceEntries>
 				</configuration>
@@ -472,6 +482,7 @@
 					</folderInfo>
 					<sourceEntries>
 						<entry excluding="startup" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="SDK"/>
+						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="includes"/>
 						<entry flags="LOCAL|VALUE_WORKSPACE_PATH" kind="sourcePath" name="source"/>
 					</sourceEntries>
 				</configuration>
@@ -610,4 +621,5 @@
 		</configuration>
 	</storageModule>
 	<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
+	<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
 </cproject>

@@ -1,5 +1,5 @@
 /***************************************************************************//**
-  @file     gpio.h
+  @file     gpio_pdrv.h
   @brief    Simple GPIO Pin services, similar to Arduino
   @author   Nicolás Magliola
  ******************************************************************************/
@@ -20,13 +20,6 @@
  * CONSTANT AND MACRO DEFINITIONS USING #DEFINE
  ******************************************************************************/
 
-// Convert port and number into pin ID
-// Ex: PTB5  -> PORTNUM2PIN(PB,5)  -> 0x25
-//     PTC22 -> PORTNUM2PIN(PC,22) -> 0x56
-#define PORTNUM2PIN(p,n)    (((p)<<5) + (n))
-#define PIN2PORT(p)         (((p)>>5) & 0x07)
-#define PIN2NUM(p)          ((p) & 0x1F)
-
 // Modes
 #ifndef INPUT
 #define INPUT               0
@@ -44,9 +37,6 @@
 /*******************************************************************************
  * ENUMERATIONS AND STRUCTURES AND TYPEDEFS
  ******************************************************************************/
-
-// Ports
-enum { PA, PB, PC, PD, PE };
 
 // IRQ modes
 typedef enum

@@ -1,34 +1,36 @@
 /***************************************************************************//**
-  @file     SysTick.c
-  @brief    SysTick driver
-  @author   Nicolás Magliola
+  @file     encoder_drv.c
+  @brief    Encoder Driver Source File
+  @author   Grupo 4
  ******************************************************************************/
 
 /*******************************************************************************
  * INCLUDE HEADER FILES
  ******************************************************************************/
 
-#include "SysTick_pdrv.h"
-
-#include "hardware.h"
-
+#include "encoder_drv.h"
+#include "gpio_pdrv.h"
+#include "timer_drv.h"
 
 /*******************************************************************************
  * CONSTANT AND MACRO DEFINITIONS USING #DEFINE
  ******************************************************************************/
 
-#define DEVELOPMENT_MODE    1
-
-#define SYSTICK_LOAD_INIT   ((__CORE_CLOCK__/SYSTICK_ISR_FREQUENCY_HZ) - 1U)
-
-#if SYSTICK_LOAD_INIT > (1<<24)
-#error Overflow de SysTick! Ajustar  __CORE_CLOCK__ y SYSTICK_ISR_FREQUENCY_HZ!
-#endif // SYSTICK_LOAD_INIT > (1<<24)
 
 
 /*******************************************************************************
  * ENUMERATIONS AND STRUCTURES AND TYPEDEFS
  ******************************************************************************/
+
+typedef enum
+{
+	ENCODER_sXX  				= 0x00,         // Both Channels Inactive
+  ENCODER_sXB  				= 0x01,         // Only Channel B Active
+  ENCODER_sAX  				= 0x02,         // Only Channel A Active
+  ENCODER_sAB  				= 0x03         // Both Channels Active
+
+} EncoderState_t;
+
 
 /*******************************************************************************
  * VARIABLES WITH GLOBAL SCOPE
@@ -38,6 +40,9 @@
  * FUNCTION PROTOTYPES FOR PRIVATE FUNCTIONS WITH FILE LEVEL SCOPE
  ******************************************************************************/
 
+static void encoder_isr(void);
+static EncoderState_t getState(void);
+
 /*******************************************************************************
  * ROM CONST VARIABLES WITH FILE LEVEL SCOPE
  ******************************************************************************/
@@ -46,7 +51,13 @@
  * STATIC VARIABLES AND CONST VARIABLES WITH FILE LEVEL SCOPE
  ******************************************************************************/
 
-static systck_callback_t systick_callback;
+static tim_id_t timerId;
+static ttick_t timerTicks = ENCODER_ISR_PERIOD;
+static uint8_t rcha_active = !CHANNEL_ACTIVE;
+static uint8_t rchb_active = !CHANNEL_ACTIVE;
+static EncoderState_t oldState = ENCODER_sXX;
+static EncoderState_t newState = ENCODER_sXX;
+static EncoderEvent_t ev = ENCODER_noev;
 
 /*******************************************************************************
  *******************************************************************************
@@ -54,25 +65,37 @@ static systck_callback_t systick_callback;
  *******************************************************************************
  ******************************************************************************/
 
-bool SysTick_Init (systck_callback_t funcallback)
+bool encoderInit(void)
 {
-    static bool yaInit = false;
-#if DEVELOPMENT_MODE
-    if (!yaInit && funcallback)
-#endif // DEVELOPMENT_MODE
+  static bool yaInit = false;
+    
+  if (!yaInit) // init peripheral
+  {
+    gpioMode(PIN_RCHA, CH_INPUT_TYPE);  // Set gpio connected to RCHA as input
+    gpioMode(PIN_RCHB, CH_INPUT_TYPE);  // Set gpio connected to RCHB as input
+    timerInit();
+    timerId = timerGetId();
+    if(timerId != TIMER_INVALID_ID)
     {
-        SysTick->CTRL = 0x00;
-        SysTick->LOAD = SYSTICK_LOAD_INIT;
-        SysTick->VAL  = 0x00;
-        SysTick->CTRL = SysTick_CTRL_CLKSOURCE_Msk | SysTick_CTRL_TICKINT_Msk | SysTick_CTRL_ENABLE_Msk;
-
-        systick_callback = funcallback;
-        yaInit = true;
+      timerStart(timerId, timerTicks, TIM_MODE_PERIODIC, &encoder_isr);
+      yaInit = true;
     }
-    return yaInit;
+  }
+
+  return yaInit;
 }
 
+bool encoder_hasEvent(void)
+{
+  return ev;
+}
 
+EncoderEvent_t encoder_getEvent(void)
+{
+  EncoderEvent_t temp = ev;
+  ev = ENCODER_noev;
+  return temp;
+}
 
 /*******************************************************************************
  *******************************************************************************
@@ -80,14 +103,43 @@ bool SysTick_Init (systck_callback_t funcallback)
  *******************************************************************************
  ******************************************************************************/
 
-__ISR__ SysTick_Handler (void)
+static void encoder_isr(void)
 {
-#if DEVELOPMENT_MODE
-    if (systick_callback)
-#endif // DEVELOPMENT_MODE
-    {
-        systick_callback();
-    }
+  newState = getState();
+
+  switch (newState)
+  {
+  case ENCODER_sXX:
+    /* code */
+    break;
+
+  case ENCODER_sXB:
+    if(oldState == ENCODER_sXX)
+      ev = ENCODER_eRightTurn;
+    break;
+  
+  case ENCODER_sAX:
+    if(oldState == ENCODER_sXX)
+      ev = ENCODER_eLeftTurn;
+    break;
+  
+  case ENCODER_sAB:
+    /* code */
+    break;
+
+  default:
+    break;
+  }
+
+  oldState = newState;
+}
+
+static EncoderState_t getState(void)
+{
+  rcha_active = (gpioRead(PIN_RCHA) == CHANNEL_ACTIVE);       // Get Channel States
+  rchb_active = (gpioRead(PIN_RCHB) == CHANNEL_ACTIVE);
+
+  return (EncoderState_t)((rcha_active << 1) + rchb_active);
 }
 
 /******************************************************************************/

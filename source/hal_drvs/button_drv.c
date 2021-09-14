@@ -1,6 +1,6 @@
 /***************************************************************************//**
-  @file     encoder_drv.c
-  @brief    Encoder Driver Source File
+  @file     button_drv.c
+  @brief    Button driver source file.
   @author   Grupo 4
  ******************************************************************************/
 
@@ -8,7 +8,7 @@
  * INCLUDE HEADER FILES
  ******************************************************************************/
 
-#include "encoder_drv.h"
+#include "button_drv.h"
 #include "gpio_pdrv.h"
 #include "timer_drv.h"
 
@@ -16,23 +16,6 @@
  * CONSTANT AND MACRO DEFINITIONS USING #DEFINE
  ******************************************************************************/
 
-#define ENCODER_DEVELOPMENT_MODE 1
-
-// Choose Board for Pin config
-#define FRDM            0
-#define DJ_BOARD        1
-
-#define BOARD           DJ_BOARD
-
-#if (BOARD == DJ_BOARD)
-#define PIN_RCHA            PORTNUM2PIN(PA,2)   // D.I - SIG
-#define PIN_RCHB            PORTNUM2PIN(PB,23)  // D.I - SIG
-#define CHANNEL_ACTIVE      LOW
-#define CH_INPUT_TYPE       INPUT               // Physical Pull-Up Included
-#endif
-
-// Period for ISR
-#define ENCODER_ISR_PERIOD     5U*TIMER_SCALING                  // 5 ms - Software Debouncing
 
 /*******************************************************************************
  * ENUMERATIONS AND STRUCTURES AND TYPEDEFS
@@ -40,13 +23,9 @@
 
 typedef enum
 {
-	ENCODER_sXX  				= 0x00,         // Both Channels Inactive
-  ENCODER_sXB  				= 0x01,         // Only Channel B Active
-  ENCODER_sAX  				= 0x02,         // Only Channel A Active
-  ENCODER_sAB  				= 0x03         // Both Channels Active
-
-} EncoderState_t;
-
+	BUTTON_sReleased				= 0x00,
+	BUTTON_sPressed         = 0x01
+} ButtonState_t;
 
 /*******************************************************************************
  * VARIABLES WITH GLOBAL SCOPE
@@ -56,8 +35,10 @@ typedef enum
  * FUNCTION PROTOTYPES FOR PRIVATE FUNCTIONS WITH FILE LEVEL SCOPE
  ******************************************************************************/
 
-static void encoder_isr(void);
-static EncoderState_t getState(void);
+/**
+ * @brief Periodic service
+ */
+static void button_isr(void);
 
 /*******************************************************************************
  * ROM CONST VARIABLES WITH FILE LEVEL SCOPE
@@ -68,12 +49,11 @@ static EncoderState_t getState(void);
  ******************************************************************************/
 
 static tim_id_t timerId;
-static ttick_t timerTicks = ENCODER_ISR_PERIOD;
-static uint8_t rcha_active = !CHANNEL_ACTIVE;
-static uint8_t rchb_active = !CHANNEL_ACTIVE;
-static EncoderState_t oldState = ENCODER_sXX;
-static EncoderState_t newState = ENCODER_sXX;
-static EncoderEvent_t ev = ENCODER_noev;
+static ttick_t timerTicks = BUTTON_ISR_PERIOD;
+static bool buttonPressed = false;
+static ButtonState_t state = BUTTON_sReleased;
+static ButtonEvent_t ev = BUTTON_noev;
+static ttick_t counter = 0; // Counts succesive PRESSED states
 
 /*******************************************************************************
  *******************************************************************************
@@ -81,19 +61,20 @@ static EncoderEvent_t ev = ENCODER_noev;
  *******************************************************************************
  ******************************************************************************/
 
-bool encoderInit(void)
+bool buttonInit(void)
 {
   static bool yaInit = false;
     
   if (!yaInit) // init peripheral
   {
-    gpioMode(PIN_RCHA, CH_INPUT_TYPE);  // Set gpio connected to RCHA as input
-    gpioMode(PIN_RCHB, CH_INPUT_TYPE);  // Set gpio connected to RCHB as input
+    gpioMode(PIN_SW, SW_INPUT_TYPE);  // Set gpio connected to RSwitch as input
     timerInit();
     timerId = timerGetId();
+#if BUTTON_DEVELOPMENT_MODE
     if(timerId != TIMER_INVALID_ID)
+#endif
     {
-      timerStart(timerId, timerTicks, TIM_MODE_PERIODIC, &encoder_isr);
+      timerStart(timerId, timerTicks, TIM_MODE_PERIODIC, &button_isr);
       yaInit = true;
     }
   }
@@ -101,15 +82,20 @@ bool encoderInit(void)
   return yaInit;
 }
 
-bool encoder_hasEvent(void)
+bool button_isPressed(void)
+{
+  return buttonPressed;
+}
+
+bool button_hasEvent(void)
 {
   return ev;
 }
 
-EncoderEvent_t encoder_getEvent(void)
+ButtonEvent_t button_getEvent(void)
 {
-  EncoderEvent_t temp = ev;
-  ev = ENCODER_noev;
+  ButtonEvent_t temp = ev;
+  ev = BUTTON_noev;
   return temp;
 }
 
@@ -119,43 +105,42 @@ EncoderEvent_t encoder_getEvent(void)
  *******************************************************************************
  ******************************************************************************/
 
-static void encoder_isr(void)
+static void button_isr(void)
 {
-  newState = getState();
+  buttonPressed = (gpioRead(PIN_SW) == SW_ACTIVE);
 
-  switch (newState)
+  switch (state)
   {
-  case ENCODER_sXX:
-    /* code */
-    break;
-
-  case ENCODER_sXB:
-    if(oldState == ENCODER_sXX)
-      ev = ENCODER_eRightTurn;
+  case BUTTON_sPressed:
+    if(!buttonPressed)
+    {
+      ev = BUTTON_eRelease;
+      state = BUTTON_sReleased;
+      counter = 0;
+    }
+    else
+    {
+      if(counter == LKP_THRESHOLD)
+        ev = BUTTON_eLKP;
+      else if (counter == TM_THRESHOLD)
+        ev = BUTTON_eTypeMatic;
+      else if (counter > TM_THRESHOLD && !((counter - TM_THRESHOLD) % TM_REPEAT))
+        ev = BUTTON_eTypeMatic;
+      counter++;
+    }
     break;
   
-  case ENCODER_sAX:
-    if(oldState == ENCODER_sXX)
-      ev = ENCODER_eLeftTurn;
-    break;
-  
-  case ENCODER_sAB:
-    /* code */
+  case BUTTON_sReleased:
+    if(buttonPressed)
+    {
+      ev = BUTTON_ePress;
+      state = BUTTON_sPressed;
+    }
     break;
 
   default:
     break;
   }
-
-  oldState = newState;
-}
-
-static EncoderState_t getState(void)
-{
-  rcha_active = (gpioRead(PIN_RCHA) == CHANNEL_ACTIVE);       // Get Channel States
-  rchb_active = (gpioRead(PIN_RCHB) == CHANNEL_ACTIVE);
-
-  return (EncoderState_t)((rcha_active << 1) + rchb_active);
 }
 
 /******************************************************************************/

@@ -1,5 +1,5 @@
 /***************************************************************************//**
-  @file     timer.c
+  @file     timer_drv.c
   @brief    Timer driver. Advanced implementation
   @author   Nicolás Magliola
  ******************************************************************************/
@@ -8,29 +8,16 @@
  * INCLUDE HEADER FILES
  ******************************************************************************/
 
+#include "board.h"
 #include "timer_drv.h"
-
 #include "SysTick_pdrv.h"
+#include "gpio_pdrv.h"
 
 /*******************************************************************************
  * CONSTANT AND MACRO DEFINITIONS USING #DEFINE
  ******************************************************************************/
 
-// Choose Board for Pin config
-#define FRDM            0
-
-#define BOARD           FRDM
-
-#if (BOARD == FRDM)
-// #if TIMER_TICK_MS != (1000U/SYSTICK_ISR_FREQUENCY_HZ)
-// #error Las frecuencias no coinciden!!
-// #endif // TIMER_TICK_MS != (1000U/SYSTICK_ISR_FREQUENCY_HZ)
-#endif
-
-#define TIMER_DEVELOPMENT_MODE    1
-
-#define TIMER_ID_INTERNAL   0
-
+#define TIMER_ID_INTERNAL           0
 
 /*******************************************************************************
  * ENUMERATIONS AND STRUCTURES AND TYPEDEFS
@@ -99,7 +86,7 @@ bool timerInit(void)
 
 tim_id_t timerGetId(void)
 {
-#ifdef TIMER_DEVELOPMENT_MODE
+#if TIMER_DEVELOPMENT_MODE
     if (timers_cant >= TIMERS_MAX_CANT)
     {
         return TIMER_INVALID_ID;
@@ -114,7 +101,7 @@ tim_id_t timerGetId(void)
 
 void timerStart(tim_id_t id, ttick_t ticks, uint8_t mode, tim_callback_t callback)
 {
-#ifdef TIMER_DEVELOPMENT_MODE
+#if TIMER_DEVELOPMENT_MODE
     if ((id < timers_cant) && (mode < CANT_TIM_MODES))
 #endif // TIMER_DEVELOPMENT_MODE
     {
@@ -163,6 +150,7 @@ void timerDelay(ttick_t ticks)
 
 static void timer_isr(void)
 {
+    gpioWrite(PIN_ISR_TEST, HIGH);
     for(tim_id_t id = TIMER_ID_INTERNAL; id < timers_cant; id++)
     {
         if(timers[id].running)  // si el timer esta activo
@@ -176,6 +164,7 @@ static void timer_isr(void)
             }         
         }
     }
+    gpioWrite(PIN_ISR_TEST, LOW);
 }
 
 static void timerResetCnt(tim_id_t id)

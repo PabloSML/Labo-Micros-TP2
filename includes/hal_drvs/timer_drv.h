@@ -1,13 +1,11 @@
 /***************************************************************************//**
-  @file     led_drv.h
-  @brief    LED Driver Header File
-  @author   Grupo 4
+  @file     timer_drv.h
+  @brief    Timer driver. Advanced implementation
+  @author   Nicolás Magliola
  ******************************************************************************/
 
-#ifndef _LED_DRV_H_
-#define _LED_DRV_H_
-
-
+#ifndef _TIMER_H_
+#define _TIMER_H_
 
 /*******************************************************************************
  * INCLUDE HEADER FILES
@@ -16,36 +14,25 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdlib.h>
-
+#include "timer_config.h"
 
 /*******************************************************************************
  * CONSTANT AND MACRO DEFINITIONS USING #DEFINE
  ******************************************************************************/
 
-// Choose Board for Pin config
-#define FRDM            0
-#define DJ_BOARD        1
-
-#define BOARD           DJ_BOARD
-
-// Period for ISR
-#define TIMER_SCALING          5U
-#define LED_ISR_PERIOD         5U*TIMER_SCALING   // 5 ms
 
 /*******************************************************************************
  * ENUMERATIONS AND STRUCTURES AND TYPEDEFS
  ******************************************************************************/
 
-#if (BOARD == DJ_BOARD)
-typedef enum
-{
-	LED_1                 = 0x00,
-	LED_2				          = 0x01,
-	LED_3      			      = 0x02,
-  LED_OFF               = 0x03
-  
-} led_label_t;
-#endif
+// Timer Modes
+enum { TIM_MODE_SINGLESHOT, TIM_MODE_PERIODIC, CANT_TIM_MODES };
+
+// Timer alias
+typedef uint32_t ttick_t;
+typedef uint8_t tim_id_t;
+typedef void (*tim_callback_t)(void);
+
 
 /*******************************************************************************
  * VARIABLE PROTOTYPES WITH GLOBAL SCOPE
@@ -56,46 +43,56 @@ typedef enum
  ******************************************************************************/
 
 /**
- * @brief Initialize led_drv and corresponding peripheral
+ * @brief Initialize timer and corresponding peripheral
  * @return Initialization succeed
  */
-bool ledInit(void);
+bool timerInit(void);
+
 
 // Non-Blocking services ////////////////////////////////////////////////
 
 /**
- * @brief Turn On chosen LED
- * @param led Chosen LED
+ * @brief Request a timer
+ * @return ID of the timer to use
  */
-void ledOn(led_label_t led);
+tim_id_t timerGetId(void);
+
 
 /**
- * @brief Turn Off chosen LED
- * @param led Chosen LED
+ * @brief Begin to run a new timer
+ * @param id ID of the timer to start
+ * @param ticks time until timer expires, in ticks
+ * @param mode SINGLESHOT or PERIODIC
+ * @param callback Function to be call when timer expires
  */
-void ledOff(led_label_t led);
+void timerStart(tim_id_t id, ttick_t ticks, uint8_t mode, tim_callback_t callback);
+
 
 /**
- * @brief Toggle chosen LED
- * @param led Chosen LED
+ * @brief Stop running a timer
+ * @param id ID of the timer to stop
  */
-void ledToggle(led_label_t led);
+void timerStop(tim_id_t id);
+
 
 /**
- * @brief Blink chosen LED
- * @param led Chosen LED
- * @param period Blinking period (ms - Multiple of LED_ISR_PERIOD*LED_CANT)
+ * @brief Verify if a timer has run timeout
+ * @param id ID of the timer to check for expiration
+ * @return 1 = timer expired
  */
-void ledBlink(led_label_t led, uint32_t period);
+bool timerExpired(tim_id_t id);
+
+
+// Blocking services ////////////////////////////////////////////////
 
 /**
- * @brief Turn on chosen LED for duration
- * @param led Chosen LED
- * @param duration Duration of ON Time (ms - Multiple of LED_ISR_PERIOD*LED_CANT)
+ * @brief Wait the specified time. Use internal timer
+ * @param ticks time to wait in ticks
  */
-void ledOn_timeout(led_label_t led, uint32_t duration);
+void timerDelay(ttick_t ticks);
+
 
 /*******************************************************************************
  ******************************************************************************/
 
-#endif // _LED_DRV_H_
+#endif // _TIMER_H_

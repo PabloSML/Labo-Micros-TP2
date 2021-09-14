@@ -4,7 +4,12 @@
             "name": "Win32",
             "includePath": [
                 "${workspaceFolder}/**",
-                "${workspaceFolder}/SDK/CMSIS"
+                "${workspaceFolder}/SDK/CMSIS",
+                "${workspaceFolder}/SDK/startup",
+                "${workspaceFolder}/config/mcal_drvs",
+                "${workspaceFolder}/config/hal_drvs",
+                "${workspaceFolder}/includes",
+                "${workspaceFolder}/config"
             ],
             "defines": [
                 "_DEBUG",

@@ -1,50 +1,38 @@
 /***************************************************************************//**
-  @file     SysTick.h
-  @brief    SysTick driver
-  @author   Nicol�s Magliola
+  @file     7seg_config.h
+  @brief    Seven Segment Driver Config File
+  @author   Grupo 4
  ******************************************************************************/
 
-#ifndef _SYSTICK_H_
-#define _SYSTICK_H_
+#ifndef _7SEG_CONFIG_H_
+#define _7SEG_CONFIG_H_
 
 /*******************************************************************************
  * INCLUDE HEADER FILES
  ******************************************************************************/
 
-#include <stdbool.h>
 #include <stdint.h>
-
+#include <stdbool.h>
+#include <stdlib.h>
+#include "board.h"
 
 /*******************************************************************************
  * CONSTANT AND MACRO DEFINITIONS USING #DEFINE
  ******************************************************************************/
 
-#define SYSTICK_ISR_FREQUENCY_HZ 5000U
+// Period for ISR
+
+#define DISPLAY_ISR_PERIOD            1U  // 0.2 ms
+#define NEXT_DISPLAY_REFRESH_TICKS    6U
 
 
 /*******************************************************************************
  * ENUMERATIONS AND STRUCTURES AND TYPEDEFS
  ******************************************************************************/
 
-typedef void (*systck_callback_t)(void);
-
-/*******************************************************************************
- * VARIABLE PROTOTYPES WITH GLOBAL SCOPE
- ******************************************************************************/
-
-/*******************************************************************************
- * FUNCTION PROTOTYPES WITH GLOBAL SCOPE
- ******************************************************************************/
-
-/**
- * @brief Initialize SysTick driver
- * @param funcallback Function to be call every SysTick
- * @return Initialization and registration succeed
- */
-bool SysTick_Init (systck_callback_t funcallback);
 
 
 /*******************************************************************************
  ******************************************************************************/
 
-#endif // _SYSTICK_H_
+#endif // _7SEG_CONFIG_H_
