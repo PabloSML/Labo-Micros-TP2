@@ -57,7 +57,7 @@
 
 #define PIN_ISR_TEST      PORTNUM2PIN(PC,10)  // D.O - AH
 
-#else if (BOARD == FRDM)
+#elif (BOARD == FRDM)
 // On Board User LEDs
 #define PIN_LED_RED     PORTNUM2PIN(PB,22) // PTB22
 #define PIN_LED_GREEN   PORTNUM2PIN(PE,26) // PTE26

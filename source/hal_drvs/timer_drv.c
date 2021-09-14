@@ -76,10 +76,11 @@ static tim_id_t timers_cant = TIMER_ID_INTERNAL+1;
 bool timerInit(void)
 {
     static bool yaInit = false;
-#if (BOARD == FRDM)
     if (!yaInit && SysTick_Init(timer_isr)) // init peripheral
+    {
+        gpioMode(PIN_ISR_TEST, OUTPUT);
         yaInit = true;
-#endif
+    }
     return yaInit;
 }
 

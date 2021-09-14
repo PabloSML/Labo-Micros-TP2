@@ -18,18 +18,6 @@
 
 #define SEVEN_SEG_DEVELOPMENT_MODE 1
 
-#define PIN_CSEGA         PORTNUM2PIN(PC,5)   // D.O - AH
-#define PIN_CSEGB         PORTNUM2PIN(PC,7)   // D.O - AH
-#define PIN_CSEGC         PORTNUM2PIN(PC,0)   // D.O - AH
-#define PIN_CSEGD         PORTNUM2PIN(PC,9)   // D.O - AH
-#define PIN_CSEGE         PORTNUM2PIN(PC,8)   // D.O - AH
-#define PIN_CSEGF         PORTNUM2PIN(PC,1)   // D.O - AH
-#define PIN_CSEGG         PORTNUM2PIN(PB,19)  // D.O - AH
-#define PIN_CSEGDP        PORTNUM2PIN(PB,18)  // D.O - AH
-
-#define PIN_SEL0          PORTNUM2PIN(PC,3)   // D.O - AH
-#define PIN_SEL1          PORTNUM2PIN(PC,2)   // D.O - AH
-
 #define NUMBER_OF_SEGMENTS 6
 
 #define SEGMENT_ACTIVE   HIGH

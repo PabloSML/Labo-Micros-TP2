@@ -8,7 +8,6 @@
  * INCLUDE HEADER FILES
  ******************************************************************************/
 
-#include "hardware.h"
 #include "board.h"
 #include "button_drv.h"
 #include "led_drv.h"
@@ -43,7 +42,6 @@
 /* Función que se llama 1 vez, al comienzo del programa */
 void App_Init (void)
 {
-  hw_DisableInterrupts();
 
   // Inits for DJ_BOARD
   boardInit();
@@ -54,7 +52,6 @@ void App_Init (void)
   magneticReaderInit();
   logic_module_init();
 
-  hw_EnableInterrupts();
 }
 
 /* Función que se llama constantemente en un ciclo infinito */
