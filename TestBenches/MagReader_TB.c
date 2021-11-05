@@ -85,12 +85,14 @@ static uint8_t ID_array[8];
    NVIC_EnableIRQ(PORTB_IRQn);
 
    // Inits for DJ_BOARD
-   ledInit();
-   buttonInit();
+   gpioMode(LED_RED,output);
+   gpioMode(LED_BLUE,output);
+   gpioMode(LED_GREEN,output);
+   gpioWrite(LED_RED,HIGH);
+   gpioWrite(LED_BLUE,HIGH);
+   gpioWrite(LED_GREEN,HIGH);
    magneticReaderInit();
-
    hw_EnableInterrupts();
-
 }
 
 /* Función que se llama constantemente en un ciclo infinito */
@@ -106,10 +108,19 @@ void App_Run (void)
       case MAGREADER_noev:
         break;
       case MAGREADER_cardsliding:
+        gpioWrite(LED_BLUE,LOW);
+        gpioWrite(LED_RED,HIGH);
+        gpioWrite(LED_GREEN,HIGH);
         break;
       case MAGREADER_carderror:
+        gpioWrite(LED_BLUE,HIGH);
+        gpioWrite(LED_RED,LOW);
+        gpioWrite(LED_GREEN,HIGH);
         break;
       case MAGREADER_cardUpload:
+        gpioWrite(LED_BLUE,HIGH);
+        gpioWrite(LED_RED,HIGH);
+        gpioWrite(LED_GREEN,LOW);
         uint8_t * pan = getPAN();
         for(uint8_t i = 0; i < 8; i++){
           ID_array[i] = pan[i];
