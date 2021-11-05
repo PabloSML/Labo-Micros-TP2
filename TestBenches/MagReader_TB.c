@@ -116,13 +116,14 @@ void App_Run (void)
         gpioWrite(LED_BLUE,HIGH);
         gpioWrite(LED_RED,LOW);
         gpioWrite(LED_GREEN,HIGH);
+        uint8_t * checker = getrawData();
         break;
       case MAGREADER_cardUpload:
         gpioWrite(LED_BLUE,HIGH);
         gpioWrite(LED_RED,HIGH);
         gpioWrite(LED_GREEN,LOW);
         uint8_t * pan = getPAN();
-        for(uint8_t i = 0; i < 8; i++){
+        for(uint8_t i = 0; i < 8; i++)
           ID_array[i] = pan[i];
         break;
     }

@@ -78,4 +78,7 @@ bool magreader_hasEvent(void);
  */
 MagReaderEvent_t magreader_getEvent(void);
 
+//POR FAVOR MATENME
+uint8_t * getrawData(void);
+
 #endif // MAGNETIC__READER_H_

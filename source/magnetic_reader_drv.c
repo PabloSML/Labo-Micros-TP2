@@ -127,6 +127,11 @@ uint8_t getPANlen(void)
 {
   return cardData.PANLength;
 }
+
+uint8_t * getrawData(void)
+{
+  return parsedRawData;
+}
 /*******************************************************************************
 *                     LOCAL FUNCTION DEFINITIONS
 *******************************************************************************/
@@ -138,6 +143,13 @@ static void magReaderHandler(void)
     bitCounter = 0; //Reinicio mi contador
 
     bool isdataOK = parseData();
+
+    //NO ME MIRES SOY HORRISBLE
+    for(uint8_t char_num = 0; char_num < realTracklen; ++char_num)
+    {
+      parsedRawData[char_num] = reverseChar(&rawCardData[char_num*BITS_PER_CHAR]);
+    }
+    //MATAME CUANDO ME HAYAS CORREGIDO
 
     if(isdataOK)
     {
