@@ -77,5 +77,10 @@ bool magreader_hasEvent(void);
  * @return NOEV, CARDSLIDING, CARDERROR, CARDUPLOAD
  */
 MagReaderEvent_t magreader_getEvent(void);
+/**
+ * @brief Get magreader raw data
+ * @return Pointer to Raw Data
+ */
+uint8_t* magreader_getRawData(void);
 
 #endif // MAGNETIC__READER_H_

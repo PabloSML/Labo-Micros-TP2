@@ -26,8 +26,8 @@
 
 
  typedef struct {
-	uint64_t valid_IDs[5];
-	uint64_t valid_PINs[5];
+	uint64_t valid_IDs[7];
+	uint64_t valid_PINs[7];
  } credentials_format;
 
 
@@ -202,12 +202,12 @@ void run_logic_module(void){
 		{
 
 			case MAGREADER_cardUpload: //From magnetic card
-				panLen = getPANlen();
-	    		if(panLen >= ID_LEN)
+				// panLen = getPANlen();
+	    		// if(panLen >= ID_LEN)
 				{
-					uint8_t * pan = getPAN();
+					uint8_t * pan = magreader_getRawData();
 					for(uint8_t i = 0; i < ID_LEN; i++){
-						ID_array[i] = pan[i];
+						ID_array[i] = (pan[i] % 10);
 					}
 	    			convert_ID();
 					if(check_ID())
@@ -262,9 +262,9 @@ static bool check_ID(){
 }
 
 void upload_valid_credentials(void){
-	uint64_t validIDs[5] = {12345678UL,11112222UL,11111111UL,34345678UL,63913003UL};
-	uint64_t validPINs[5] = {1234UL,12345UL,1111UL,23452UL,1111UL};
-	for(uint8_t i = 0; i < 5; i++){
+	uint64_t validIDs[7] = {51870110UL,57586984UL,11111111UL,57046507UL,51870114UL, 52404904UL, 58663114UL};
+	uint64_t validPINs[7] = {1111UL,1111UL,1111UL,1111UL,1111UL,1111UL,1111UL};
+	for(uint8_t i = 0; i < 7; i++){
 		valid_credentials.valid_IDs[i] = validIDs[i];
 		valid_credentials.valid_PINs[i] = validPINs[i];
 	}

@@ -124,6 +124,11 @@ uint8_t getPANlen(void)
 {
   return cardData.PANLength;
 }
+
+uint8_t* magreader_getRawData(void)
+{
+  return parsedRawData;
+}
 /*******************************************************************************
 *                     LOCAL FUNCTION DEFINITIONS
 *******************************************************************************/
@@ -139,8 +144,8 @@ static void magReaderHandler(void)
     if(isdataOK)
     {
       ev = MAGREADER_cardUpload;
-      uploadCardData();
-      clrRawData();
+      // uploadCardData();
+      // clrRawData();
     }
     else
     {
@@ -181,24 +186,24 @@ static void uploadCardData(void)
 
 static bool parseData(void)
 {
-  bool okstruct;
+  bool okstruct = true;
   uint8_t SSindex = findSSIndex();
-  uint8_t FSindex = findFSIndex();
-  uint8_t ESindex = findESIndex();
-  if(SSindex == CHAR_NOT_FOUND || FSindex == CHAR_NOT_FOUND || ESindex == CHAR_NOT_FOUND)
+  // uint8_t FSindex = findFSIndex();
+  // uint8_t ESindex = findESIndex();
+  if(SSindex == CHAR_NOT_FOUND /*|| FSindex == CHAR_NOT_FOUND || ESindex == CHAR_NOT_FOUND*/)
   {
     okstruct = false;
   }
   else
   {
-    uint8_t PANlen = (FSindex - SSindex)/BITS_PER_CHAR - 1; //Resto SS
-    uint8_t realTracklen = MAX_CHAR_LEN - 19 + PANlen; //el largo de PAN es variable
+    // uint8_t PANlen = (FSindex - SSindex)/BITS_PER_CHAR - 1; //Resto SS
+    // uint8_t realTracklen = MAX_CHAR_LEN - 19 + PANlen; //el largo de PAN es variable
 
-    for(uint8_t char_num = 0; char_num < realTracklen; ++char_num)
+    for(uint8_t char_num = 0; char_num < MAX_CHAR_LEN; ++char_num)
     {
-      parsedRawData[char_num] = reverseChar(&rawCardData[SSindex + char_num*BITS_PER_CHAR]);
+      parsedRawData[char_num] = reverseChar(&rawCardData[SSindex + char_num*BITS_PER_CHAR + 1]);
     }
-    okstruct = chkParity(parsedRawData);
+    // okstruct = chkParity(parsedRawData);
   }
   return okstruct;
 }
