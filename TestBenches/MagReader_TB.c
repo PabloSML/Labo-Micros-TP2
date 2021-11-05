@@ -22,7 +22,7 @@
 // Connection between FRDM and DJ_Board (Here just for developement)
 // D = Digital, I = Input, O = Output, A = Active, H = High, L = Low, SIG = Signal
 
-#define PIN_CSEGA         PORTNUM2PIN(PC,15)  // D.O - AH
+#define PIN_CSEGA         PORTNUM2PIN(PC,5)  // D.O - AH
 #define PIN_CSEGB         PORTNUM2PIN(PC,7)   // D.O - AH
 #define PIN_CSEGC         PORTNUM2PIN(PC,0)   // D.O - AH
 #define PIN_CSEGD         PORTNUM2PIN(PC,9)   // D.O - AH
@@ -39,9 +39,9 @@
 #define PIN_STATUS0       PORTNUM2PIN(PB,9)   // D.O - AH
 #define PIN_STATUS1       PORTNUM2PIN(PC,17)  // D.O - AH
 
-#define PIN_MAG_EN        PORTNUM2PIN(PB,2) //
-#define PIN_MAG_DT 	      PORTNUM2PIN(PB,3) //
-#define PIN_MAG_CLK	      PORTNUM2PIN(PB,10) //
+#define PIN_MAG_EN        PORTNUM2PIN(PB,2) //  DEBUGGER
+#define PIN_MAG_DT 	      PORTNUM2PIN(PB,3) //  DEBUGGER
+#define PIN_MAG_CLK	      PORTNUM2PIN(PB,10) // DEBUGGER
 /*******************************************************************************
  * FUNCTION PROTOTYPES FOR PRIVATE FUNCTIONS WITH FILE LEVEL SCOPE
  ******************************************************************************/
@@ -59,7 +59,9 @@ static led_label_t oldFocus = LED_1;
 static led_label_t newFocus = LED_1;
 // static bool led_on = false;
 // static enum led_color_t led_color = RED;
-
+static uint8_t len;
+static uint8_t* pan;
+static uint8_t ID_array[8];
 /*******************************************************************************
  *******************************************************************************
                         GLOBAL FUNCTION DEFINITIONS
@@ -67,108 +69,55 @@ static led_label_t newFocus = LED_1;
  ******************************************************************************/
 
 /* Función que se llama 1 vez, al comienzo del programa */
-void App_Init (void)
-{
-  hw_DisableInterrupts();
+ void App_Init (void)
+ {
+   hw_DisableInterrupts();
 
-  magneticReaderInit();
-  gpioMode(PIN_LED_GREEN, OUTPUT);
-  gpioToggle(PIN_LED_RED);
-  gpioToggle(PIN_LED_GREEN);
-  gpioMode(PIN_LED_RED, OUTPUT);
+   //Enable clocking for port B,A,E
+   SIM->SCGC5 |= SIM_SCGC5_PORTA_MASK;
+   SIM->SCGC5 |= SIM_SCGC5_PORTB_MASK;
+   SIM->SCGC5 |= SIM_SCGC5_PORTC_MASK;
+   SIM->SCGC5 |= SIM_SCGC5_PORTE_MASK;
 
-  hw_EnableInterrupts();
+   PORT_Type * portpointer[] = PORT_BASE_PTRS;
+   portpointer[PB]->ISFR |= 0xFFFFU;
 
+   NVIC_EnableIRQ(PORTB_IRQn);
+
+   // Inits for DJ_BOARD
+   ledInit();
+   buttonInit();
+   magneticReaderInit();
+
+   hw_EnableInterrupts();
 
 }
 
 /* Función que se llama constantemente en un ciclo infinito */
 void App_Run (void)
 {
-  if (encoder_hasEvent())
+  if (magreader_hasEvent())
   {
 
-    encoderEv = encoder_getEvent();
+    magreaderEv = magreader_getEvent();
 
-    switch (encoderEv)
+    switch (magreaderEv)
     {
-    case BUTTON_ePress:
-      /* Act on release... */
-      break;
-
-    case BUTTON_eRelease:
-      if(prevButtonEv == BUTTON_ePress)
-      {
-        ledToggle(LED_1);
-        // led_on = !led_on;
-      }
-      else if (prevButtonEv == BUTTON_eLKP)
-      {
-        // if(led_on)
-        //   cycle_led_color();
-        ledBlink(LED_1, 500U);
-        ledBlink(LED_2, 1000U);
-        ledBlink(LED_3, 100U);
-      }
-      break;
-
-    case ENCODER_eRightTurn:
-      newFocus = (led_label_t)((oldFocus + 2) % 3);
-      break;
-
-    case ENCODER_eLeftTurn:
-      newFocus = (led_label_t)((oldFocus + 1) % 3);
-      break;
-
-    default:
-      break;
+      case MAGREADER_noev:
+        break;
+      case MAGREADER_cardsliding:
+        break;
+      case MAGREADER_carderror:
+        break;
+      case MAGREADER_cardUpload:
+        uint8_t * pan = getPAN();
+        for(uint8_t i = 0; i < 8; i++){
+          ID_array[i] = pan[i];
+        break;
     }
-
-    prevButtonEv = newButtonEv;
-
   }
 
 }
-
-
-/*******************************************************************************
- *******************************************************************************
-                        LOCAL FUNCTION DEFINITIONS
- *******************************************************************************
- ******************************************************************************/
-
-// static void cycle_led_color(void)
-// {
-//   switch (led_color)
-//   {
-//   case RED:
-//     if(led_on)
-//     {
-//       ledOff(LED_RED);
-//       ledOn(LED_GREEN);
-//     }
-//     led_color = GREEN;
-//     break;
-//   case GREEN:
-//     if(led_on)
-//     {
-//       ledOff(LED_GREEN);
-//       ledOn(LED_BLUE);
-//     }
-//     led_color = BLUE;
-//     break;
-//   case BLUE:
-//     if(led_on)
-//     {
-//       ledOff(LED_BLUE);
-//       ledOn(LED_RED);
-//     }
-//     led_color = RED;
-//     break;
-//   default:
-//     break;
-//   }
-// }
 
 /*******************************************************************************
  ******************************************************************************/
